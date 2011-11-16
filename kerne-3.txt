@@ -1,0 +1,2572 @@
+1. Качаем
+
+Для начала нужно выкачать само ядро [точнее исходники] с сайта http://www.kernel.org
+Качайте архив tar.bz2 - он меньше по размеру. Имя файла должно быть примерно таким - linux-2.6.7.tar.bz2 , размер файла около 33 Мбайт. Качайте всегда последнее стабильное ядро. Если на ядро Вам нужно наложить какие-либо заплатки, то возможно, Вам придется закачать предпоследнюю версию, т.к. заплатки для новой версии ядра появляются иногда не сразу, а через пару недель.
+
+Если у Вас уже есть ядро 2.6.0, а Вам нужно поставить, например, 2.6.7, то необязательно качать снова 33 Мбайта, можно выкачать заплатки [их также называют еще "патчи", но давайте говорить на русском] и обновить исходники Вашего ядра до последней версии. В таком случае Вам нужно выкачать все заплатки по возрастанию номеров версии от вашей версии до последней. В данном примере это заплатки 2.6.1, 2.6.2, 2.6.3, 2.6.4, 2.6.5, 2.6.6 и 2.6.7. Файлы заплаток называются так - patch-2.6.1.bz2 . На главной странице всех их не найти, поищите их на ftp сервере ftp://ftp.kernel.org
+
+Кроме самого ядра нам, возможно, понадобится выкачать дополнительные заплатки, расширяющие возможности ядра. К примеру, в ядре 2.6 нет поддержки lirc (пульты дистанционного управления). Чтобы эта поддержка была, на ядро нужно наложить соответствующую заплатку.
+
+Для примера возьмем такие заплатки:
+
+    Bootsplash - графическая загрузка Линукса
+    Win4Lin - для одноименной программы, позволяющей запускать window$ 95, 98, Me в окошке почти без потери производительности.
+    Lirc - поддержка пультов дистанционного управления
+    Supermount - возможность работы со сменными носителями без их подключения/отключения
+
+Иногда на официальном сайте заплаток нет или они сильно устарели, но Вы можете найти "неофициальные" заплатки с помощью поисковика http://www.google.ru
+Будьте осторожны с применением заплаток, т.к. это может не в лучшую сторону изменить надежность и стабильность ядра.
+
+Качать лучше заплатку для той версии ядра которую Вы хотите поставить, если их нет, то можно закачать для самой последней из имеющихся. В таком случае есть вероятность что заплатка не поставится. Причем вероятность этого тем больше, чем больше разница в версиях ядер. Предположим что мы ставим ядро 2.6.7 и получили такие файлы
+
+    linux-2.6.6.tar.bz2
+    patch-2.6.7.bz2
+    bootsplash-3.1.4-2.6.7.diff
+    Kernel-Win4Lin3-2.6.7.patch и mki-adapter26_1_3_6.patch
+    lirc-2.6.5-20040404.patch
+    supermount-2.0.4-2.6.6.patch.gz
+
+Хорошо. Теперь подготовим папку, где будем собирать ядро. В Линуксе для сборки из исходников есть специальный каталог /usr/src. Однако по умолчанию писать туда рядовому пользователю запрещено, поэтому сначала дадим себе права. Самый простой способ - запустить консоль, получить права root и установить на эту папку владельцем обычного пользователя, под которым работаем в системе.
+
+[mike@localhost mike]$ su -
+Password:
+[root@localhost root]# chown -R mike /usr/src
+[root@localhost root]#
+
+Сборка (как и работа в системе) под пользователем root является очень плохой привычкой и может в будущем сослужить Вам плохую службу. Как известно, лучший способ борьбы с вредными привычками - это не заводить их. Поэтому старайтесь сразу все делать правильно.
+
+Копируем исходники ядра (linux-2.6.6.tar.bz2) в папку /usr/src
+
+Теперь их надо распаковать. Если Вы пользуетесь файловым менеджером mc, на файле нажмите F2, а потом "x". Если Вы пользуетесь файловым менеджером gentoo (http://linux.alhimia.ru/projects/misc/gentoo/), то щелкните правой кнопкой и выберите Действия - РаспаковатьСюда. Для чистой консоли можно использовать такую команду:
+
+[mike@localhost src]$ tar -xjf linux-2.6.6.tar.bz2
+
+Получился каталог linux-2.6.6. Переименуйте его, например, в linux-2.6.7-my
+
+Копируем все заплатки туда и переходим к следующему пункту.
+
+2. Ставим заплатки
+
+Сначала распакуем упакованные заплатки. В mc для этого файла нажмите F2 а потом "y" (для .gz архива) или "b"(для .bz2 архива). В gentoo выделите все файлы нажмите правую кнопку Действия-Распаковать. Для чистой консоли можете использовать такие команды:
+
+[mike@localhost linux-2.6.7-my]$ gunzip *.gz
+[mike@localhost linux-2.6.7-my]$ bzip2 -d *.bz2
+
+Теперь, собственно, об установке заплаток. Сначала накладываем закладку для обновления версии ядра ( patch-2.6.7 ), потом остальные. В файловом менеджере Gentoo для установки можно просто щелкнуть правой кнопкой и выбрать Действия-Наложить. В консоли нужно дать следующую команду
+
+patch -p1 -i <имя файла заплатки>
+
+В нашем примере это будет выглядеть так
+
+[mike@localhost linux-2.6.7-my]$patch -p1 -i patch-2.6.7
+patching file CREDITS
+patching file Documentation/DocBook/kernel-hacking.tmpl
+patching file Documentation/DocBook/libata.tmpl
+......
+patching file sound/usb/usbaudio.h
+patching file sound/usb/usbmixer.c
+patching file sound/usb/usbquirks.h
+
+[mike@localhost linux-2.6.7-my]$ patch -p1 -ibootsplash-3.1.4-2.6.7.diff
+patching file drivers/char/keyboard.c
+patching file drivers/char/n_tty.c
+patching file drivers/char/vt.c
+patching file drivers/video/Kconfig
+patching file drivers/video/Makefile
+patching file drivers/video/bootsplash/Kconfig
+patching file drivers/video/bootsplash/Makefile
+patching file drivers/video/bootsplash/bootsplash.c
+patching file drivers/video/bootsplash/bootsplash.h
+patching file drivers/video/bootsplash/decode-jpg.c
+patching file drivers/video/bootsplash/decode-jpg.h
+patching file drivers/video/bootsplash/render.c
+patching file drivers/video/console/fbcon.c
+patching file drivers/video/console/fbcon.h
+patching file drivers/video/vesafb.c
+patching file include/linux/console_struct.h
+patching file include/linux/fb.h
+patching file kernel/panic.c
+
+[mike@localhost linux-2.6.7-my]$ patch -p1 -i Kernel-Win4Lin3-2.6.7.patch
+patching file kernel/exit.c
+patching file kernel/fork.c
+patching file kernel/sched.c
+patching file mm/vmscan.c
+patching file arch/i386/Kconfig
+patching file arch/i386/kernel/apm.c
+patching file arch/i386/kernel/cpu/common.c
+patching file arch/i386/kernel/entry.S
+patching file arch/i386/kernel/head.S
+patching file arch/i386/kernel/process.c
+patching file arch/i386/kernel/signal.c
+patching file arch/i386/kernel/vm86.c
+patching file arch/i386/Makefile
+patching file arch/i386/mki/Makefile
+patching file arch/i386/mki/mki.c
+patching file arch/i386/mm/fault.c
+patching file include/asm-i386/desc.h
+patching file include/asm-i386/mki.h
+patching file include/asm-i386/mkiversion.h
+patching file include/asm-i386/segment.h
+patching file include/asm-i386/thread_info.h
+patching file include/linux/init_task.h
+patching file include/linux/sched.h
+
+[mike@localhost linux-2.6.7-my]$ patch -p1 -i mki-adapter26_1_3_6.patch
+patching file arch/i386/Makefile
+patching file arch/i386/mki-adapter26/LICENSE
+patching file arch/i386/mki-adapter26/Makefile
+patching file arch/i386/mki-adapter26/mki26.c
+patching file arch/i386/mki-adapter26/mki-adapter26.h
+patching file arch/i386/mki-adapter26/mkifunc.h
+patching file arch/i386/mki-adapter26/mki-main.c
+patching file arch/i386/mki-adapter26/mkivnet.c
+patching file arch/i386/mki-adapter26/README
+patching file arch/i386/mki-adapter26/timer.c
+patching file arch/i386/mki-adapter26/vneteth.h
+patching file arch/i386/mki-adapter26/vnetint-pub.h
+
+[mike@localhost linux-2.6.7-my]$ patch -p1 -i lirc-2.6.5-20040404.patch
+patching file Documentation/lirc/lirc_it87
+patching file drivers/char/Kconfig
+Hunk #1 succeeded at 442 (offset -2 lines).
+patching file drivers/char/lirc/Kconfig
+patching file drivers/char/lirc/lirc_atiusb.c
+patching file drivers/char/lirc/lirc_bt829.c
+patching file drivers/char/lirc/lirc_dev.c
+patching file drivers/char/lirc/lirc_dev.h
+patching file drivers/char/lirc/lirc_gpio.c
+patching file drivers/char/lirc/lirc_i2c.c
+patching file drivers/char/lirc/lirc_it87.c
+patching file drivers/char/lirc/lirc_it87.h
+patching file drivers/char/lirc/lirc_mceusb.c
+patching file drivers/char/lirc/lirc_parallel.c
+patching file drivers/char/lirc/lirc_parallel.h
+patching file drivers/char/lirc/lirc_serial.c
+patching file drivers/char/lirc/lirc_sir.c
+patching file drivers/char/lirc/Makefile
+patching file drivers/char/Makefile
+patching file include/linux/lirc.h
+
+[mike@localhost linux-2.6.7-my]$ patch -p1 -i supermount-2.0.4-2.6.6.patch
+patching file Documentation/filesystems/00-INDEX
+patching file Documentation/filesystems/supermount.txt
+patching file drivers/cdrom/cdrom.c
+Hunk #3 succeeded at 874 (offset -12 lines).
+Hunk #4 succeeded at 892 (offset -12 lines).
+Hunk #5 succeeded at 975 (offset -12 lines).
+Hunk #6 succeeded at 989 (offset -12 lines).
+Hunk #7 succeeded at 1066 (offset -12 lines).
+Hunk #8 succeeded at 1338 (offset -12 lines).
+Hunk #9 succeeded at 2106 (offset -12 lines).
+Hunk #10 succeeded at 2907 (offset -12 lines).
+patching file drivers/cdrom/cdu31a.c
+Hunk #1 succeeded at 3173 (offset -1 lines).
+Hunk #2 succeeded at 3206 (offset -1 lines).
+Hunk #3 succeeded at 3220 (offset -1 lines).
+patching file drivers/cdrom/cm206.c
+patching file drivers/cdrom/mcd.c
+patching file drivers/cdrom/mcdx.c
+patching file drivers/cdrom/sbpcd.c
+patching file drivers/ide/ide-cd.c
+Hunk #1 succeeded at 3410 (offset -2 lines).
+Hunk #2 succeeded at 3462 (offset -2 lines).
+patching file drivers/ide/ide-floppy.c
+Hunk #4 succeeded at 1959 (offset 1 line).
+Hunk #5 succeeded at 2027 (offset 1 line).
+patching file drivers/scsi/sd.c
+Hunk #2 succeeded at 469 (offset 8 lines).
+Hunk #3 succeeded at 500 (offset 8 lines).
+Hunk #4 succeeded at 660 (offset 9 lines).
+Hunk #5 succeeded at 692 (offset 9 lines).
+Hunk #6 succeeded at 744 (offset 9 lines).
+patching file drivers/scsi/sr.c
+Hunk #1 succeeded at 477 (offset 9 lines).
+Hunk #2 succeeded at 527 (offset 9 lines).
+Hunk #3 succeeded at 543 (offset 9 lines).
+patching file fs/block_dev.c
+Hunk #1 succeeded at 512 (offset -2 lines).
+patching file fs/ext2/super.c
+patching file fs/isofs/inode.c
+patching file fs/Kconfig
+Hunk #1 succeeded at 946 (offset 34 lines).
+patching file fs/Makefile
+Hunk #1 succeeded at 91 (offset -1 lines).
+patching file fs/namespace.c
+Hunk #1 succeeded at 852 (offset 64 lines).
+patching file fs/super.c
+Hunk #2 succeeded at 530 (offset 16 lines).
+Hunk #3 succeeded at 659 (offset 16 lines).
+Hunk #4 succeeded at 774 (offset 16 lines).
+Hunk #5 succeeded at 829 (offset 16 lines).
+patching file fs/supermount/changelog
+patching file fs/supermount/dentry.c
+patching file fs/supermount/file.c
+patching file fs/supermount/filemap.c
+patching file fs/supermount/init.c
+patching file fs/supermount/Kconfig
+patching file fs/supermount/Makefile
+patching file fs/supermount/mediactl.c
+patching file fs/supermount/namei.c
+patching file fs/supermount/proc.c
+patching file fs/supermount/subfs.c
+patching file fs/supermount/super.c
+patching file fs/supermount/supermount.h
+patching file fs/udf/super.c
+patching file include/linux/cdrom.h
+Hunk #1 succeeded at 987 (offset 12 lines).
+patching file include/linux/fs.h
+Hunk #1 succeeded at 91 (offset -2 lines).
+Hunk #2 succeeded at 115 (offset -2 lines).
+Hunk #3 succeeded at 581 (offset 3 lines).
+Hunk #4 succeeded at 772 (offset 3 lines).
+Hunk #5 succeeded at 845 (offset 3 lines).
+patching file include/linux/genhd.h
+patching file include/linux/supermount_media.h
+
+Обратите внимание на вывод команды patch. Если заплатка идеально подходит к ядру, то в выводе должны быть только строчки patching file ... . Если Вы видите строчку Hunk #1 succeeded at... это означает что заплатка наложена успешно, но место наложения сдвинуто на некоторое кол-во строк. Если же Вы увидите слово Failed - то значит заплатка не подходит, нужно искать более подходящую. В этом случае лучше удалить наш каталог /usr/src/linux-2.6.7-my и начать все сначала уже без этой заплатки.
+
+Итак, исходники ядра готовы и ждут когда их соберут (скомпилируют).
+
+3 Собираем
+
+3.1 Подготовка
+
+Для начала давайте посмотрим файл Makefile. Нас интересуют первые 4 строчки
+
+VERSION = 2
+PATCHLEVEL = 6
+SUBLEVEL = 7
+EXTRAVERSION =
+...
+
+Измените четвертую строку на
+
+EXTRAVERSION=-my
+
+Это приведет к тому, что сделанное нами ядро будет называться linux-2.6.7-my. Если нам нужно будет несколько вариантов ядра 2.6.7, то можно снова изменить строчку EXTRAVERSION=my2, собрать ядро еще раз и получить ядро linux-2.6.7-my2. После этого при загрузке можно будет выбирать нужный вариант ядра.
+
+3.2 Чистка
+
+Запустите команду make mrproper
+
+[mike@localhost linux-2.6.7-my]$ make mrproper
+
+Эта команда нужна для удаления временных файлов, созданных при предыдущей сборке. Она удаляет также все настройки, которые Вы сделали во время прошлой сборки. (Настройки лежат в файле .config. Если есть желание сохранить выбор модулей, перенесите куда-нибудь этот файл, выполните чистку, а потом верните обратно)
+
+3.3 Стратегия настройки ядра
+
+А вот сейчас начинается самый ответственный момент, от которого зависит успех всего мероприятия. Здесь нужно знать хотя бы немного английский и знать начинку компьютера. Для начала немного теории.
+
+Ядро может быть монолитным, а может быть модульным. Что это означает? Монолитное ядро - это просто один файл, который грузится при старте системы, и сидит в оперативной памяти до выключения компьютера. Те возможности, которые заложены в этом файле, не подлежат изменению. Если включить все возможности в ядро, получаем очень большое и очень медленное ядро. Если сделать маленькое и быстрое ядро, то придется пожертвовать возможностями. Кроме того с таким ядром не смогут работать такие коммерческие программы как Win4Lin . На таком ядре не поставить драйвер видеокарты от фирмы Nvidia, что ставит крест на использовании этих ядер на домашних игровых компьютерах с этими видеокартами. В чем же преимущество монолитного ядра? Оно хорошо своей более высокой защищенностью и более простым использованием. При старте ядро обладает всеми возможностями, которые в него заложены. Кроме этого, монолитное ядро не подвержено всевозможным троянским программам, которые осуществляют свою вредную деятельность путем замены стандартных модулей и внедрением своих. Поэтому монолитные ядра хороши для серверов. Ядро в этом случае располагается в каталоге /boot и имеет имя vmlinuz-xxxx.
+
+Модульное ядро - это тот же файл, который грузится при загрузке с диске как и в случае с монолитным ядром, но плюс к есть нему набор файлов, которые называются модулями. Эти файлы по сути - возможности ядра, которые Вы можете подключить к ядру и отключить от него без перезагрузки компьютера. Ядро которое у Вас поставилось вместе с дистрибутивом - модульное. В модульном ядре все возможности, которые могут быть выведены в отдельный файл, т.е. модуль, - делаются модульными. Самый большой плюс модульного ядра - то что в него можно включить абсолютно все возможности, на что способно ядро, все устройства, все файловые системы и т.п. Ядро в результате получается небольшим (в оперативной памяти) , быстрым и гибким. Минусы такого подхода - собственно в необходимости работы с модулями, Вы не получите возможности модуля, пока его не загрузите. К счастью, большинство модулей грузиться автоматически, а остальные грузятся при старте системы загрузочными скриптами, избавляя Вас от необходимости грузить вручную десятки модулей. В этом случае ядро представлено тем же файлом /boot/vmlinuz-xxxx и содержимым каталога /lib/modules/<версия ядра>. Кроме того модульному ядру нужен специальный образ загрузки т.н. initrd. Этот образ содержит все необходимые модули которые позволяют ядру загрузить ситему. Без этих модулей оно неспособно подключить системный раздел жесткого диска и прочитать файлы. Initrd файл располагается в каталоге /boot и имеет имя initrd-xxxx.
+
+Где же истина? Как всегда, посередине. Какие-то возможности лучше включить в ядро, а какие-то сделать модулями. Какие именно? Те возможности которые Вам нужны постоянно - лучше включить, например драйвер жесткого диска, на котором лежит система. Если к Вам приходит друг раз в месяц со своей usb фотокамерой - делайте драйвер usb и камеры модулями. Если сомневаетесь, нужна ли Вам та или иная особенность - ставьте модулем. Посмотреть какие модули сейчас загружены в систему Вы можете командой lsmod
+
+Если ваш дистрибутив собран для 2.4 ядра (например АСПЛинукс 9.0 и 9.2), то у Вас могут быть проблемы с загрузкой модулей, связанные с тем что в 2.6 изменились названия модулей. Поэтому я рекомендую включать все, что Вам точно необходимо, в ядро.
+
+Итак, настройка производится на выбор одной из команд
+
+    make xconfig
+    Для пользователей, у которых есть графика - запустится графическая программка для настройки. Этот вариант нам наиболее симпатичен.
+    make gconfig
+    То же что в первом случае, только для графичекой среды GNOME.
+    make menuconfig
+    Для консоли. Предлагает текстовые меню и кнопки.
+    make config
+    Для консоли. Задает 1000 и 1 вопрос.
+    make oldconfig
+    Для консоли. Этот вариант очень полезен если у нас уже есть сформированный файл настроек .config (можно использовать файл настроек от старого ядра). В этом варианте задаются только вопросы по возможностям, которые появились с той версии ядра, для которой сделан файл настроек. 
+
+3.4 Пример настройки ядра.
+
+Итак вперед!
+
+Если Вы хотите возможность оформить модулем, ставьте точку (m для консоли), Если включить в ядро, - галочку (* или y)
+
+Для тех кто не знает английский, привожу примерную настройку рабочей станции. Естественно, оговорюсь, что я не считаю свой подход единственно правильным, не претендую на 100% понимание всего что есть в ядре, - как я это понимаю, так и привожу в этом документе
+
+Code maturity level options "Завершенность кода"
+
+    Prompt for development and/or incomplete code/drivers - ДА
+    Включать незавершенный код. Включать ли в ядро драйверы с состоянием "Экспериментально". Такие модули рекомендуется включать с осторожностью. С другой стороны, существует много стабильно работающих модулей, которые официально находятся в экспериментальном состоянии. Если ответить на этот вопрос НЕТ, то все такие модули не будут включаться, они даже исчезнут из списка.
+
+        Select only drivers expected to compile cleanly - ДА
+        Выбирать только те драйвера, которые собираются без ошибок
+
+        Select only drivers that don't need compile-time external firmware - ДА
+        Выбирать только те драйвера, которые не требуют внешних прошивок
+
+General setup "Общие"
+
+    Support for paging of anonymous memory - ДА (обязательно)
+    Поддержка swap, т.е. виртуальной памяти на жестком диске. Без этой памяти Вы будете ограничены только оперативной.
+
+    System V IPC - ДА (обязательно)
+    Механизм связи между процессами. Набор бибиотечных функций и вызовов ядра позволяющий процессам обмениваться информацией. Некоторые программы (например dosemu) требуют этого механизма
+
+    POSIX Message Queues - ДА или НЕТ
+    Очередь для сообщений формата POSIX с использованием приоритетов. Часть механизма связи между процессами. Нужно если запускать программы написанные под этот формат, например с ОС Solaris. Пока особого смысла включать эту опцию нет, но и вреда от этого не будет.
+
+    BSD Process Accounting - ДА (желательно)
+    Поддержка дополнительных сведений о процессах (время запуска, владелец, командная строка запуска, использование памяти). Полезно для контроля процессов.
+
+    Sysctl support - ДА (обязательно)
+    Механизм изменения параметров ядра на лету. Загрузочные скрипты используют этот механизм для установки параметров ядра. См. файл /etc/sysctl.conf. Если выключить, то изменять параметры можно будет через команду echo ( например echo 1 >/proc/... )
+
+    Auditing support - НЕТ или ДА
+    Включение механизма проверки ядра. Например используется системой SELinux (система расширенной безопасности для Linux). Если Вы не знаете, что это такое, то можете отключить. С другой стороны, если ваш дистрибутив поддерживает эту систему, то есть смысл включить. Для работы проверки необходимо включить системные вызовы проверки ниже.
+
+        Enable system-call auditing support - ДА
+        Включение системных вызовов для механизма проверки ядра.
+
+    Support for hot-pluggable devices - ДА (обязательно)
+    Поддержка устройств (например устройства USB), подключаемых на ходу, без выключения компьютера. Эта опция включает системные вызовы. Кроме этого для обработки событий подключения или отключения устройств у Вас должен быть настроен "агент горячего подключения". См man hotplug.
+
+    Kernel .config support - ДА (желательно)
+    Сохранять настройки ядра в нем самом. Это полезно, если у Вы удалите папку с исходниками ядра, а потом захотите немного изменить ядро.
+
+        Enable access to .config through /proc/config.gz - ДА (желательно)
+        Возможность скачать настройки загруженного в данный момент ядра из файла /proc/config.gz
+
+    Configure standard kernel features (for small systems) - НЕТ (обязательно)
+    Возможность отключения базовых функций ядра - для нестандартных ядер, применяемых в устройствах, ограниченных ресурсами.
+
+        Optimize for size - НЕТ
+        Оптимизация кода ядра не по скорости, а по размеру. Может быть полезно для создания загрузочных дискет. В случае, если у Вас старая версия компилятора, могкт возникнуть проблемы.
+
+Loadable module support "Поддержка модулей ядра"
+
+    Enable loadable module support - ДА (обязательно)
+    Создание модульного ядра. Если ответить НЕТ, то ядро будет монолитным.
+
+        Module unloading - ДА (желательно)
+        Возможность выгрузки модулей. Однако, некоторые модули, которые используются в данный момент, все равно не могут быть выгружены.
+
+            Forced module unloading - ДА (для опытных пользователей)
+            Возможность принудительной выгрузки модуля, даже если оно еще нужно ядру. Для опытных.
+
+        Module versioning support (EXPERIMENTAL) - НЕТ (можно и ДА)
+        Возможность использования модулей от другой версии ядра. Для опытных.
+
+        Automatic kernel module loading - ДА (обязательно)
+        Автоматическая загрузка модуля в случае необходимости.
+
+Processor type and features "Тип и характеристики процесора"
+
+    Subarchitecture Type - (PC-compatible)
+    Тип архитектуры - у Вас наверняка PC
+
+    Processor family - (Pentium-II/Celeron(pre-Coppermine))
+    Здесь поставьте тип Вашего процессора. Если Вы его не знаете, смотрите файлы /proc/cpuinfo и /var/log/dmesg (ищите слово "Processor")
+
+    Generic x86 support - НЕТ
+    Включение поддержки типов процессора, отличных от выбранного - для создания дистрибутивов.
+
+    HPET Timer Support - ДА
+    Поддержка внутреннего таймера ядра нового типа
+
+    Symmetric multi-processing support - НЕТ
+    Поддержка многопроцессорных компьютеров (как правило, используется только в серверах). Однако полезно для систем на базе процессора Pentium 4 с технологией hyperthreading. Эта опция позволит использовать один реальный процессор как 2 виртуальных.
+
+        (2) Maximum number of CPUs (2-255)
+        Количество процессоров. Для одного процессора Pentium4 Xeon поставьте значение 2.
+
+        SMT (Hyperthreading) scheduler support - ДА (для Pentium 4 Xeon)
+        Улучшенный планировщик для процессора Pentium4.
+
+    Preemptible Kernel - ДА (обязательно)
+    Приводит к заметному ускорению графических программ. Рекомендуется для рабочих станций, домашних компьютеров.
+
+    Local APIC support on uniprocessors -ДА (Желательно)
+    Если у Вас в процессоре есть контроллер прерываний. Если же его нет, то ничего плохого от включения не произойдет. Однако на опыте я столкнулся с тем, что если на некоторых материнских платах APIC реализован с ошибками, то это может привести к периодическому зависанию компьютера и неработоспособности некоторого встроенного оборудования. Если у Вас возникнут такие проблемы, то пересоберите ядро с отключенным APIC
+
+        IO-APIC support on uniprocessors - ДА (Желательно)
+        Расширение контроллера прерываний. Как правило для многопроцессорных систем. Если же его нет, то ничего плохого от включения не произойдет.
+
+    Machine Check Exception - ДА (Обязательно)
+    Проверка процессора на сбои или перегрев.
+
+        Check for non-fatal errors on AMD Athlon/Duron / Intel Pentium 4 ДА (Желательно)
+        Возможность отлова и исправления не фатальных ошибок процессора
+
+        check for P4 thermal throttling interrupt ДА (Для владельцев Pentium 4)
+        В случае перегрева будет выведено сообщение.
+
+    Toshiba Laptop support - НЕТ
+    Dell laptop support - НЕТ
+    Всем, кроме владельцев соответствующих компьютеров можно поставить НЕТ
+
+    /dev/cpu/microcode - Intel IA32 CPU microcode support - НЕТ (можно и ДА)
+    Поддержка доступа к микрокоду процессора
+
+    /dev/cpu/*/msr - Model-specific register support - НЕТ
+    Поддержка регистров msr для многопроцессорных систем.
+
+    /dev/cpu/*/cpuid - CPU information support -НЕТ
+    Доступ к идентификатору процессора, как правило не нужно.
+
+    Firmware Drivers
+
+        BIOS Enhanced Disk Drive calls determine boot disk (EXPERIMENTAL) - НЕТ
+        Экспериментальная функция для определения с какого диска загружается BIOS.
+
+    High Memory Support - (off)
+    Если у Вас оперативной памяти больше 1 ГБ - поставьте размер (см /proc/meminfo)
+
+    Math emulation - НЕТ (Обязательно)
+    Эмуляция математического сопроцессора - только для 386 и 486SX.
+
+    MTRR (Memory Type Range Register) support - ДА (Обязательно)
+    Ускоряет до 2,5 раз скорость передачи изображений видеокарте
+
+    Boot from EFI support (EXPERIMENTAL) - НЕТ
+    Загрузка с EFI. Нам не нужно
+
+    Use register arguments (EXPERIMENTAL) - НЕТ (Обязательно)
+    Сборка ядра с опцией компилятора gcc -mregparm=3. Поддерживается только версией gcc 3.0 и выше. (см. gcc --version )
+
+Power management options (ACPI, APM) "Управление питанием"
+
+    Power Management support - ДА (Обязательно)
+    Включение управления питанием.
+
+        Software Suspend (EXPERIMENTAL) - НЕТ
+        Программный "ждущий" режим - только для опытных. Позволяет сбросить память на раздел swap, выключить компьютер, а потом продолжить работу с момента перехода . Этот режим не использует функции ACPI.
+
+        Suspend-to-Disk Support - НЕТ, можно и ДА
+        Возможность сброса всей оперативной памяти на swap раздел и переход в режим пониженного энергопотребления. Использует функции ACPI.
+
+            Default resume partition ()
+            Можно указать раздел диска, куда сохранять оперативную память
+
+        ACPI (Advanced Configuration and Power Interface) Support
+        ACPI Support - ДА (Рекомендуется)
+        поддержка управлением питанием через ACPI - если у Вас древний компьютер, то такой поддержки может и не быть
+
+            Sleep States (EXPERIMENTAL) - НЕТ (Обязательно)
+            Спящий режим - во избежание глюков лучше отключить
+
+            AC Adapter - НЕТ (можно и ДА)
+            Контроль напряжения сети - для ноутбуков.
+
+            Battery - НЕТ (можно и ДА)
+            Контроль батареи - для ноутбуков
+
+            Button - ДА (желательно)
+            возможность обработки нажатия на кнопок питания, sleep (спящий режим)
+
+            Fan - ДА (желательно)
+            Для получения информации о состоянии вентиляторов
+
+            Processor - ДА (желательно)
+            Когда процессор не используется, перевести его в режим пониженного энергопотребления
+
+                Thermal Zone - ДА (Обязательно)
+                Защита от перегрева. Без этой защиты процессор может "сгореть на работе"
+
+            ASUS/Medion Laptop Extras - НЕТ
+            Toshiba Laptop Extras - НЕТ
+            Поддержка соответствующих моделей лаптопов.
+
+            Debug Statements - НЕТ (Желательно)
+            Если Вы не разработчик и у Вас ACPI работает стабильно, то лучше выключить эту опцию, чтобы сэкономить место в памяти
+
+            Power Management Timer Support - ДА (желательно)
+            Счетчик управления питанием. Эта часть ACPI должна работать без проблем, даже если у Вас проблемы с другими модулями ACPI. Хорош как точный источник времени, не подверженный воздействию таких событий как изменение частоты или напряжения процессора, состояния простоя процессора. 
+
+        APM (Advanced Power Management) BIOS support - НЕТ
+        Если у Вас есть ACPI, то можно не включать. Иначе включите
+
+            Ignore USER SUSPEND - НЕТ (можно ДА)
+            Исправление ошибки некоторых глючных bios`ов (ноутбуки NEC Versa M)
+
+            Enable PM at boot time - НЕТ (Желательно)
+            Включение управления питания при загрузке. Может привести к зависанию на некоторых компьтерах (NEC UltraLite Versa 33/C; Toshiba T400CDT)
+
+            Make CPU Idle calls when idle - ДА (Желательно)
+            Позволяет экономить электроэнергию во время простоя процессора.
+
+            Enable console blanking using APM - НЕТ
+            Метод выключения консоли при простое. Если у Вас установлена графическая система, Вам это не нужно.
+
+            RTC stores time in GMT - НЕТ
+            Если системные часы показываю время по Лондону.
+
+            Allow interrupts during APM BIOS calls - НЕТ
+            Разрешает прерывания во время вызовов APM BIOS. Если у Вас компьютер виснет при переходе в ждущий режим - включите эту опцию.
+
+            Use real mode APM BIOS call to power off - НЕТ
+            Если у Вас компьютер не выключается сам при использовании APM - попробуйте эту опцию.
+
+        CPU Frequency scaling НЕТ (Для ноутбуков - ДА)
+        Позволяет экономить батареи переключаясь на более низкую частоту
+
+            /proc/cpufreq interface (deprecated) - НЕТ
+            Метод управления через /proc/cpufreq
+
+            Default CPUFreq governor - (performance)
+            Используемый по умолчанию регулятор частоты (лучше выбрать performance для большей производительности)
+
+                'performance' governor - ДА (Желательно)
+                Регулятор по производительности.
+
+                'powersave' governor - ДА (Желательно)
+                Регулятор частоты по энергосбережению
+
+                /proc/sys/cpu/ interface (2.4. / OLD) НЕТ (Можно и ДА)
+                Для доступа к регулятору 'userspace' через /proc/sys/cpu/
+
+                CPU frequency table helpers - ДА (Желательно)
+                Многим драйверам регуляторов нужна эта опция
+
+            CPUFreq processor drivers
+            Драйверы для смены частоты процессора
+
+                ACPI Processor P-States driver
+                Драйвер для изменения частоты процессорачерез ACPI
+
+                AMD Mobile K6-2/K6-3 PowerNow!
+                ....
+                VIA Cyrix III Longhaul
+                Включите в ядро драйвер для своего процессора
+
+Bus options (PCI, PCMCIA, EISA, MCA, ISA) "Настройки Шины"
+
+    PCI support - ДА (Обязательно)
+    Практически все компьютеры имеют эту шину. Стандартная шина для современных компьютеров.
+
+        PCI access mode - (Any)
+        Режим доступа к шине PCI (Any - все, BIOS - через BIOS, Direct - непосредственный, MMConfig - для PCI Express). Вы можете поменять механизм доступа передачей ядру параметра pci=nobios или pci=bios. Если указать Any, то ядро использует механизмы в таком порядке: MMConfig, Direct, BIOS
+
+    Vector-based interrupt indexing - НЕТ (Желательно)
+    Новый механизм прерывания не через IRQ,а через MSI
+
+    Legacy /proc/pci interface (НЕТ, можно и ДА)
+    Просмотр информации о платах pci через каталог /proc/pci. Эта функция не особо нужна, т.к. есть утилита lspci
+
+    PCI device name database - ДА (Желательно)
+    База данных наименований плат pci. Если выключить эту опцию, то вместо наименования устройств в /proc/pci, /proc/ioports будут показаны числовые идентификаторы.
+
+    ISA support - НЕТ
+    Если у Вас есть устройства, подключающиеся по этой шине, включите эту опцию
+
+        EISA support - ДА
+        Если у Вас есть ISA устройства, то скорее всего они именно EISA формата
+
+        Vesa Local Bus priming - НЕТ
+        Эта опция для карт VLB, которые считают себя EISA картой (например VLB карта Adaptec AHA-284x)
+
+        Generic PCI/EISA bridge - ДА
+        Мост между EISA и PCI. Если на Вашем компьютере установлены и PCI и EISA разъемы
+
+        EISA virtual root device - НЕТ (Обязательно)
+        Эта опция только для тех, у кого кроме EISA разъемов, других разъемоы не замечено.
+
+        EISA device name database - ДА
+        По аналогии с "PCI device name database" предоставляет базу данных имен EISA карт.
+
+    MCA support - НЕТ
+    Если у Вас есть устройства, подключающиеся по этой шине, включите эту опцию
+
+    NatSemi SCx200 support - НЕТ
+    поддержка соответствующего устройства
+
+    PCMCIA/CardBus support - НЕТ
+    Поддержка PCMCIA (16 бит) и CardBus(32 бит) карт. Карты размером с кредитную карточку. Для модемов, сетевых карт, винчестеров. За счет своих размеров может встречаться на ноутбуках.
+
+        Enable PCMCIA debugging - НЕТ
+        Включает отладочный код. Лучше выключить для ускаорения ядра.
+
+        CardBus yenta-compatible bridge support - ДА
+        Включает поддержку CardBus карт
+
+        i82092 compatible bridge support - ДА
+        Мост между PCI и PCMCIA шиной
+
+        i82365 compatible bridge support - ДА
+        Мост между ISA и PCMCIA шиной
+
+        Databook TCIC host bridge support - НЕТ
+        Для старых реализаций PCMCIA
+
+    PCI Hotplug Support - НЕТ
+    Замена на ходу карт PCI. Только для материнских карт, оборудованных соответствующим контроллером горячей замены PCI. Имеет смысл для серверов, которые нельзя выключать.
+
+Executable file formats "Формат выполняемых файлов"
+
+    Kernel support for ELF binaries - ДА (Обязательно)
+    Поддержка основного для Линукса формата запускаемых файлов и библиотек
+
+    Kernel support for a.out and ECOFF binaries - ДА (Обязательно)
+    Поддержка устаревшего, но еще использующего иногда формата библиотек .a
+
+    Kernel support for MISC binaries - МОДУЛЬ (Желательно)
+    Поддержка прочих форматов Java Phyton и пр.
+
+Device Drivers "Драйверы устройств"
+
+    Generic Driver Options
+    Memory Technology Devices (MTD) - НЕТ
+    Устройства памяти MTD - для встроенных устройств, как правило на обычном компьютере отсутствуют.
+
+    Parallel port support - Да или МОДУЛЬ (Обязательно)
+    Поддержка параллельного порта (такой широкий разъем на системном блоке, как правило туда втыкают принтер). Если у Вас постоянно подключено какое-либо устройство к этому порту, выберите ДА, если у нет таких устройств сделайте модулем на всякий случай (вдруг придет друг с принтером).
+
+        PC-style hardware -ДА или МОДУЛЬ (Обязательно)
+        Поддержка стандартной реализации параллельного порта
+
+            Multi-IO cards (parallel and serial) - НЕТ
+            Если ваш параллельный порт реализуется на PCI плате (как правило старые 386 486 компьютеры) то включите эту опцию
+
+            Use FIFO/DMA if available (EXPERIMENTAL) - НЕТ (Обязательно)
+            Экспериментальная опция
+
+            SuperIO chipset support (EXPERIMENTAL)- НЕТ (Обязательно)
+            Экспериментальная опция
+
+            Support for PCMCIA management for PC-style ports - НЕТ
+            Для портов через PCMCIA интерфейс
+
+        Support foreign hardware - НЕТ (Желательно)
+        Поддержка нестандартных портов. Лучше выключить чтобы ядро работало быстрее
+
+        IEEE 1284 transfer modes - НЕТ (Желательно)
+        Поддерка ECP и EPP режимов порта. Безопаснее выключить
+
+    Plug and Play support - ДА (Для плат на шине ISA)
+    Поддержка механизма Plug and Play (автоматическое распределение прерываний между устройствами)
+
+        PnP Debug Messages - НЕТ (Желательно)
+        Если у Вас нет проблем с распределением прерываний и все устройства работают нормально, выключите эту опцию чтобы ядро работало быстрее.
+
+        ISA Plug and Play support - НЕТ
+        Если у Вас есть платы ISA, то попробуйте поставить ДА
+
+        Plug and Play BIOS support (EXPERIMENTAL) - НЕТ (Но можно и ДА)
+        Для определения устройств интегрированных в материнскую плату
+
+    Block devices - ДА (Обязательно)
+    Блочные устройства - это жесткие диски, дискеты, компакт-диски, USB Flash карты и т.д. Без них сейчас никуда.
+
+        Normal floppy disk support - ДА (Обязательно)
+        Поддержка обычного дисковода с обычными дискетами.
+
+        XT hard disk support - НЕТ (Обязательно)
+        Поддержка очень старых винчестеров XT
+
+        Parallel port IDE device support - НЕТ
+        Эта опция для тех кто втыкает диски в параллельный порт
+
+        Compaq SMART2 support- НЕТ
+        Compaq Smart Array 5xxx support - НЕТ
+        Mylex DAC960/DAC1100 PCI RAID Controller support - НЕТ
+        Micro Memory MM5415 Battery Backed RAM support (EXPERIMENTAL) - НЕТ
+        Все эти опции для обладателей соответствующей экзотики.
+
+        Loopback device support - ДА или МОДУЛЬ (Обязательно)
+        Очень полезное петлевое устройство. Предположим мы сделали копию дискеты (CD или винта) командой dd if=/dev/fd0 of=file.img. Если у нас есть поддержка петли, то командой mount -o loop file.img /mnt/floppy можно подключить образ и работать с ним как с обычной дискетой.
+
+            Cryptoloop Support - МОДУЛЬ (Желательно)
+            Возможность создавать и работать с закодированными образами дисков.
+
+        Network block device support - НЕТ.
+        Это нужно если наш компьютер не имеет жесткого диска и мы хотим загрузиться по сети с сервера
+
+        Promise SATA SX8 (carmel) support - НЕТ или ДА
+        Для поддержки контроллера Serial ATA дисков
+
+        RAM disk support - ДА или МОДУЛЬ
+        Поддержка электронного диска (диск в оперативной памяти)
+
+        (4096) Default RAM disk size
+        Размер электронного диска по умолчанию
+
+        Initial RAM disk (initrd) support - ДА (Желательно)
+        initrd - это образ, который используется при загрузке ядра, для передачи ядру модулей, без которых он не может дотянуться до системного раздела. Initrd не нужен, если все соответствующие драйверы Вы включите в ядро. Initrd необходим для bootsplash (графическая загрузка линукса)
+
+        Support for Large Block Devices - НЕТ
+        Если Вы счастливый обладатель диска с размером более 2048 ГБ (!), то включите эту опцию
+
+    ATA/ATAPI/MFM/RLL support - ДА (Обязательно)
+    Поддержка обычных (не scsi) винчестеров и CD-ROM. Если у Вас только scsi устройства, выберите НЕТ
+
+        Enhanced IDE/MFM/RLL disk/cdrom/tape/floppy support - ДА (Обязательно)
+        "Продвинутый драйвер дисков", поддерживает все современные типы контроллеров.
+
+            Use old disk-only driver on primary interface - НЕТ (Желательно)
+            Использовать старый драйвер
+
+            Include IDE/ATA-2 DISK support - ДА (Обязательно)
+            Поддержка обычного винчестера
+
+                Use multi-mode by default - ДА (Желательно)
+                Использовать режим multi-mode по умолчанию (для ускорения ) Если у Вас постоянно выскакивает ошибка hda: set_multmode: status=0x51 { DriveReady SeekComplete Error }, то обязательно включите эту опцию
+
+                Auto-Geometry Resizing support - НЕТ (Желательно)
+                Если у Вас AWARD BIOS , диск больше 32ГБ и система не может загрузить ядро, то попробуйте эту опцию.
+
+            PCMCIA IDE support (NEW) - НЕТ
+            Для винчеcтеров, накопителей на разъемах PCMCIA
+
+            Include IDE/ATAPI CDROM support - ДА или МОДУЛЬ (обязательно если есть CDROM)
+            поддержка Компакт-Диск приводов
+
+            Include IDE/ATAPI TAPE support (EXPERIMENTAL) - НЕТ
+            Для накопителей на магнитной ленте, подключаемых через IDE разъем. Если у Вас это есть, то включите
+
+            Include IDE/ATAPI FLOPPY support - НЕТ
+            Для дисководов на IDE интерфейсах (например Iomega ZIP)
+
+            SCSI emulation support - ДА или НЕТ ( обязательно для пишущих CDROM и старых дистрибутивов )
+            Доступ к обычному cdrom как к SCSI приводу. Некоторые программы (cdrecord, cdrdao) работают только со SCSI приводами. Если у Вас новый дистрибутив (например, MandrakeLinux 10), то включать эту возможность не нужно, программы cdrecord cdrdao теперь успешно работают и без эмуляции SCSI (используйте опцию --device=ATAPI:1,0,0 ). Если Вам нужно включить эту возможность, не забудьте передать ядру параметр hdc=ide-scsi. (hdc - мастер на втором шлейфе hdd - раб на втором шлейфе, hda и hdb соответственно мастер и раб на первом шлейфе)
+
+            IDE Taskfile Access - НЕТ (Можно и ДА)
+            Для прямого доступа к диску.
+
+            IDE Taskfile IO (EXPERIMENTAL) - ДА (Можно и НЕТ)
+            Новый механизм доступа.
+
+            generic/default IDE chipset support - НЕТ
+            Общий драйвер для IDE. Имеет смысл включать, если у Вас нестандартный или старый контроллер, под который нет собственного драйвера.
+
+            CMD640 chipset bugfix/support - НЕТ
+            Поддержка соответствующего контроллера (на 486 и Pentium -I )
+
+            PNP EIDE support -НЕТ
+            Для карт EIDE поддерживающих механизм Plug and Play.
+
+            PCI IDE chipset support - ДА (Обязательно)
+            Поддержка контроллера дисков. Все интегрированные в материнскую плату контроллеры тоже использую механизм PCI.
+
+                Sharing PCI IDE interrupts support - ДА (Обязательно)
+                Большинство современных материнских плат имеют встроенный звук, который любит делить прерывание с контроллером дисков. Так что лучше сказать ДА
+
+                Boot off-board chipsets first support - НЕТ
+                Если у Вас есть контроллер дисков в виде платы PCI и Вы хотите чтобы он имел больший приоритет над встроенным (например в случае если встроенный глючит), то поставьте ДА
+
+                Generic PCI IDE Chipset Support - ДА (Желательно)
+                Универсальный драйвер, подходящий почти под любой контроллер дисков. Однако не обеспечивает скоростного доступа к диску. Можно включить на всякий случай.
+
+                OPTi 82C621 chipset enhanced support (EXPERIMENTAL) - НЕТ
+                RZ1000 chipset bugfix/support -НЕТ
+                Поддержка соотв. контроллеров.
+
+                Generic PCI bus-master DMA support - ДА (Обязательно)
+                Поддержка DMA (прямой доступ к памяти) для дисков который ускоряет доступ к дискам в несколько раз
+
+                    Force enable legacy 2.0.X HOSTS to use DMA -НЕТ
+                    Это вообще кусок кода из ядра 2.0, который непонятно почему присутствует в нашем ядре.
+
+                    Use PCI DMA by default when available - ДА (Обязательно)
+                    Сразу включать режим DMA. Если Вы выберите НЕТ, то Вам придется потом включить DMA командой hdparm -d1 /dev/hda
+
+                        Enable DMA only for disks - НЕТ
+                        Включать DMA только для дисков. Если Вы "счастливый" обладатель компакт привода LG (того из них что умирают при включении DMA), то обязательно поставьте ДА
+
+                    AEC62XX chipset support - НЕТ
+                    ...
+                    VIA82CXXX chipset support - ДА
+
+                    !!! Здесь перечислены драйверы контроллеров. Вам нужно ВКЛЮЧИТЬ только один из них - тот что ваш. Если Вы не знаете какой у Вас контроллер откройте другую консоль и запустите там команду lspci. Вот мой пример
+
+                    [root@localhost root]# lspci
+                    00:00.0 Host bridge: Advanced Micro Devices [AMD] AMD-760 [IGD4-1P] System Controller (rev 13)
+                    00:01.0 PCI bridge: Advanced Micro Devices [AMD] AMD-760 [IGD4-1P] AGP Bridge
+                    00:0a.0 Multimedia video controller: Brooktree Corporation Bt878 Video Capture (rev 11)
+                    00:0a.1 Multimedia controller: Brooktree Corporation Bt878 Audio Capture (rev 11)
+                    00:0e.0 Multimedia audio controller: C-Media Electronics Inc CM8738 (rev 10)
+                    00:11.0 ISA bridge: VIA Technologies, Inc. VT8231 [PCI-to-ISA Bridge] (rev 10)
+                    00:11.1 IDE interface: VIA Technologies, Inc. VT82C586A/B/VT82C686/A/B/VT8233/A/C/VT8235 PIPC Bus Master IDE (rev 06)
+                    00:11.2 USB Controller: VIA Technologies, Inc. USB (rev 1e)
+                    00:11.3 USB Controller: VIA Technologies, Inc. USB (rev 1e)
+                    00:11.4 Non-VGA unclassified device: VIA Technologies, Inc. VT8235 ACPI (rev 10)
+                    01:05.0 VGA compatible controller: nVidia Corporation NV17 [GeForce4 MX 440] (rev a3)
+
+                    Ищите строку со словом IDE (или дайте команду lspci | grep -i ide) и включайте этот драйвер. В моем случае этот драйвер VIA82CXXX
+
+                    VIA82CXXX chipset support - ДА
+
+                    Other IDE chipset support - НЕТ Расширенная поддержка некоторых встроенных и внешних IDE контроллеров. Как правило, для старых контроллеров. Обеспечивает подключение четырех устройств, и увеличение производительности для этих контроллеров. Большинство из этих драйверов требуют передачи ядру специальных параметров (см. подсказки по конкретному контроллеру)
+
+                        Generic 4 drives/port support - ДА Общий драйвер для четырех устройств на одной шине. Включается передачей параметра "ide0=four"ядру.
+
+                        ALI M14xx support -НЕТ
+                        DTC-2278 support-НЕТ
+                        Holtek HT6560B support-НЕТ
+                        PROMISE DC4030 support (EXPERIMENTAL)-НЕТ
+                        QDI QD65xx support-НЕТ
+                        UMC-8672 support-НЕТ
+                        Выберите конкретный драйвер, если у Вас такой есть.
+
+                    IGNORE word93 Validation BITS - НЕТ
+                    Если у Вас диски поддерживают ATA 4 5, но почему-то никак не включают его, Вы можете попробовать эту опцию.
+
+    SCSI device support "поддержка SCSI устройств" - ДА
+    Как правило такие устройства встречаются в серверах. Однако рядовой пользователь тоже может с ними столкнуться. Например, цифровые фотоаппараты используют эмуляцию scsi для доступа к своей памяти. Кроме этого новые винчестеры Serial ATA, которые обещают вытеснить обычные IDE жесткие диски, тоже используют SCSI протокол.
+
+        legacy /proc/scsi/ support - ДА (Желательно)
+        Информация о scsi в специальных файлах каталога /proc/scsi/. Вядре 2.6. в специальной файловой системе sysfs также присутствует информация о scsi, однако эту опцию лучше включить для обеспечения совместимости с программами, написанными под ядро 2.4.
+
+        SCSI disk support - ДА или МОДУЛЬ
+        Если есть диски или usb FlashCard устройства
+
+        SCSI tape support - НЕТ
+        Накопители на ленте, думаю они все уже вымерли.
+
+        SCSI CDROM support - НЕТ
+        Если есть scsi компакт приводы, включайте
+
+        SCSI generic support - МОДУЛЬ
+        Универсальный драйвер
+
+        Some SCSI devices (e.g. CD jukebox) support multiple LUNs
+        Probe all LUNs on each SCSI device - НЕТ
+        Build with SCSI REPORT LUNS support -НЕТ
+        Некоторые scsi устройства могут потребовать изменения этих 2х параметров
+
+        Verbose SCSI error reporting (kernel size +=12K) - НЕТ
+        SCSI logging facility - НЕТ
+        Эти 2 параметра выводят в логи ошибки при работе с устройствами. Лучше отключить, чтобы ядро работало быстрее.
+
+        SCSI Transport Attributes - НЕТ
+        Это добавляет вывод добавочной информации о sicsi в файловую ситему sysfs (см. /sys/bus/scsi)
+
+            Parallel SCSI (SPI) Transport Attributes - НЕТ
+            Добавочная информация для устройств, подключаемых через паралельный порт
+
+            FiberChannel Transport Attributes - НЕТ Для устройств FiberChannel
+
+        SCSI low-level drivers
+        Здесь Вы можете включить драйвер scsi платы. Узнать какой именно адаптер у Вас установлен можно с помощью команды lspci. Если Вы не видите своего адаптера в списке, то можете попробовать драйвер AIC, мне в свое время это помогло. Кроме обычных адаптеров scsi в этом разделе Вы найдете поддержку SATA (Serial ATA)
+
+            Serial ATA (SATA) support - ДА (Если у Вас есть SATA диски)
+            Кроме этого, Вам придется выбрать один из драйверов контроллера SATA опять-таки команда lspci Вам поможет.
+
+        PCMCIA SCSI adapter support - НЕТ
+        Для scsi устройств, подключаемых через разъем PCMCIA
+
+            Adaptec AHA152X PCMCIA support (NEW) - НЕТ
+            Future Domain PCMCIA support (NEW) - НЕТ
+            NinjaSCSI-3 / NinjaSCSI-32Bi (16bit) PCMCIA support (NEW) - НЕТ
+            Qlogic PCMCIA support (NEW) - НЕТ
+            Symbios 53c500 PCMCIA support (NEW) - НЕТ
+            PCMCIA устройства, которые поддерживаются.
+
+    Old CD-ROM drivers (not SCSI, not IDE) - НЕТ
+    Очень старые компакт-приводы, не IDE и не SCSI
+
+    Multi-device support (RAID and LVM) - ДА или МОДУЛЬ
+    Как правило технологии RAID массивов и LVM применяются в серверах и обычному пользователю интереса не представляют, т.к. требуют как минимум наличия "лишнего" жесткого диска. Однако недавно в ядре появилась поддержка закодированных файловых систем, которая реализуется через виртуальные LVM. Поэтому стоит включить
+
+        RAID support - НЕТ
+        Объединение разделов в массивы. Можно объединить несколько разделов в один. Для обычного пользователя с одним винчестером это не представляет интереса
+
+        Device mapper support - ДА или МОДУЛЬ
+        Поддержка технологии логических томов LVM2
+
+            Crypt target support - МОДУЛЬ
+            Поддержка закодированных разделов. См http://www.saout.de/misc/dm-crypt/
+
+    Fusion MPT device support - НЕТ
+    Высокопроизводительные SCSI контроллеры и сетевые платы по технологии LSI Logic Fusion Message Passing Technology
+
+    IEEE 1394 (FireWire) support - НЕТ
+    Высокоскоростной интерфейс. Как правило применяется в дорогой профессиональной видеотехнике.
+
+        Excessive debugging output - НЕТ
+        Расширенный отладочный вывод. Отключите для увеличения производительности.
+
+        OUI Database built-in - ДА
+        Включать ли в модуль базу данных имен устройств.
+
+        Build in extra config rom entries for certain functionality - ДА
+        Для увеличения возможностей адаптера путем поддержки дополнительных настроек прошивок
+
+        Device Drivers
+        Драйверы устройств
+
+            Texas Instruments PCILynx support - МОДУЛЬ
+            Оборудование на основе чипа Texas Instruments PCILynx.
+
+            OHCI-1394 support - МОДУЛЬ
+            Для устройств, работающих по спецификации OHCI-1394. Большинство устройств должно поддерживать эту спецификацию
+
+        Protocol Drivers
+        Протоколы
+
+            SBP-2 support (Harddisks etc.) - ДА или МОДУЛЬ
+            Протокол для жестких дисков и DVD приводов.
+
+            Ethernet over 1394 - МОДУЛЬ
+            Сетевой протокол. Не обеспечивает полной функциональности сетевого адаптера в части Multicast
+
+            Raw IEEE1394 I/O support - ДА
+            Прямой доступ программ к оборудованию
+
+            IEC61883-1 Plug support
+            Драйвер для IEC61883-1 Plug.
+
+    I2O device support - НЕТ
+    Умная архитектура ввода-вывода. Позволяет разбивать драйвер устройств на две части - зависимую от ОС (OSM) и не зависимую от ОС. Устройства работающие по этой технологии, как правило имеют свой процессор, который производит опреции ввода-вывода сам, разгружая от этой работы центральный процессор.
+
+        I2O Configuration support
+        Интерфейс настройки для карт I2O. Опция обязательна для RAID контроллеров от фирмв Adaptec
+
+        I2O Block OSM
+        OSM драйвер для дисков. Обязательно для RAID.
+
+        I2O SCSI OSM
+        OSM драйвер для доступа к SCSI устройствам. Может работать вместе с драйвером I2O Block OSM
+
+        I2O /proc support
+        Для размещения информации по I2O в каталоге /proc/i2o
+
+    Networking support - ДА (ОБЯЗАТЕЛЬНО)
+    Очень большой раздел, здесь настраивается сеть. Не спешите пропускать этот раздел, даже если у Вас нет сетевой карты и модема. Линукс создан для сети и посему многие программы все равно требуют наличия хотя бы виртуального сетевого интерфейса.Даже графическая система не загрузится, если отключить сеть. Поэтому с интересом читаем дальше.
+
+        Networking options
+
+            Packet socket - Да (Обязательно)
+            Пакетный режим - необходим для многих программ, например для сниффера tcpdump
+
+                Packet socket: mmapped IO - Да (Желательно)
+                Ускоренный пакетный режим
+
+            Netlink device emulation - НЕТ
+            Эта опция оставлена для совместимости. Скоро будет убрана.
+
+            Unix domain sockets - ДА (Обязательно)
+            Система "гнезд" Юникса - без этой опции даже графика не загрузится.
+
+            PF_KEY sockets - Да (Желательно)
+            Нужно для Ipsec.
+
+            TCP/IP networking - ДА (Обязательно)
+            Поддержка протокола TCP/IP - основного протокола в Линуксе
+
+                IP: multicasting - НЕТ (можно и ДА)
+                Механизм, позволяющий адресовать сразу несколько компьютеров. Если Вы включены в MBONE - сеть с аудио и видеовещанием.
+
+                IP: advanced router - ДА (можно и НЕТ)
+                Если Вы хотите использовать свой компьютер как шлюз. Шлюз например необходим для разделения интернета между несколькими компьютерами в сети.
+
+                    IP: policy routing - ДА (можно и НЕТ)
+                    Расширяет возможности шлюза
+
+                        IP: use netfilter MARK value as routing key - ДА (можно и НЕТ)
+                        С этой опцией можно сделать перенаправление пакетов в зависимости от метки, присвоенной с помощью iptables
+
+                        IP: fast network address translation - НЕТ
+                        Простой механизм NAT (замены адресов пакетов проходящих через шлюз). Лучше пользоваться полной поддержкой NAT с помощью iptables
+
+                    IP: equal cost multipath -НЕТ
+                    Позволяет задать несколько маршрутов,
+
+                    IP: use TOS value as routing key - НЕТ
+                    Возможность задания разных маршрутов для пакетов с разными полями TOS (Type Of Service)
+
+                    IP: verbose route monitoring - ДА (Желательно)
+                    В логи будет выведены сообщения о "странных" пакетах, может помочь в выявлении атаки взломщика
+
+                IP: kernel level autoconfiguration - НЕТ
+                Для бездисковых терминалов. Позволяет настроить сеть во время загрузки ядра с помощью запросов к DHCP или RARP серверу.
+
+                IP: tunneling - НЕТ
+                Создание туннелей , т.е вложение одного протокола в другой. (для VPN например)
+
+                IP: GRE tunnels over IP - НЕТ
+                Полезно если на другом конце туннеля установлен Cisco
+
+                    IP: broadcast GRE over IP - НЕТ
+                    Для поддержки широковещательных пакетов
+
+                IP: multicast routing - НЕТ
+                Позволяет использовать компьютер как маршрутизатор для пакетов Multicast. Для сети MBONE с аудио и видеовещанием
+
+                IP: ARP daemon support (EXPERIMENTAL) - НЕТ
+                Поддержка ARP (Adress Resolution Protocol) демона. Если Вы - администратор сети и ваши пользователи мухлюют со своими IP адресами (а подменять MAC адрес не умеют), то c помощью этого протокола Вы их можете вычислить.
+
+                IP: TCP Explicit Congestion Notification support - НЕТ
+                Уведомление клиентов о перегрузке сети.
+
+                IP: TCP syncookie support (disabled per default) -ДА
+                Защита от DOS атаки "SYN flooding". По умолчанию выключено. Можно включить добавив в файл /etc/sysctl.conf строчку net.ipv4.tcp_syncookies=1
+
+            IP: AH transformation - ДА
+            IP: ESP transformation - ДА
+            IP: IPComp transformation - ДА
+            Эти опции нужны для IPSec
+
+            IP virtual server support (EXPERIMENTAL) - НЕТ
+            Технология, позволяющая из нескольких компьютеров сделать кластер и организовать из кластера виртуальный сервер
+
+            The IPv6 protocol (EXPERIMENTAL) - НЕТ
+            Когда интернет перейдет на эту версию протокола ip, тогда придется включить поддержку
+
+            Network packet filtering (replaces ipchains) - ДА (Обязательно)
+            Межсетевой экран iptables. Обязательно настройте экран, если Вы соединяетесь с другими компьютерами. Кроме того iptables обеспечивает NAT (что позволяет разделять соединение с интернетом с другими компьютерами), и позволяет расширить возможности шлюза.
+
+                Network packet filtering debugging - НЕТ
+                Для отлова сбоев.
+
+                Connection tracking (required for masq/NAT) - МОДУЛЬ или ДА
+                Отслеживание соединений. Необходимо для NAT.
+
+                    FTP protocol support - МОДУЛЬ или ДА
+                    IRC protocol support - МОДУЛЬ или ДА
+                    ТFTP protocol support - НЕТ или МОДУЛЬ
+                    Amanda backup protocol support - НЕТ или МОДУЛЬ
+                    Отслеживание соответствующих протоколов. Чтобы можно было работать с данными протоколами через данный шлюз. Эти модули автоматически не загружаются. Либо включите их в ядро либо добавьте в загрузочные скрипты команду загрузки модулей.
+
+                    /etc/rc.d/rc.local.local
+                    ...
+                    modprobe ip_conntrack
+                    modprobe ip_conntrack_ftp
+                    modprobe ip_nat_ftp
+                    ...
+
+                Userspace queueing via NETLINK - НЕТ или МОДУЛЬ
+
+                IP tables support (required for filtering/masq/NAT) - МОДУЛЬ или ДА (Обязательно)
+                Фильтр по протоколу IP
+
+                    limit match support - МОДУЛЬ или ДА (Обязательно)
+                    Ограничения кол-ва пакетов - может использоваться для отсечения DOS атак
+
+                    IP range match support - МОДУЛЬ или ДА (Обязательно)
+                    Ограничение по диапазону IP адресов
+
+                    MAC address match support - МОДУЛЬ или ДА (Желательно)
+                    Ограничение по аппаратному адресу сетевой карты
+
+                    Packet type match support - МОДУЛЬ или ДА (Желательно)
+                    Тип пакета (например широковещательные пакеты)
+
+                    netfilter MARK match support - МОДУЛЬ или ДА (Желательно)
+                    Ограничение по поставленной метке.
+
+                    Multiple port match support - МОДУЛЬ или ДА (Желательно)
+                    Возможность указания в одной цепочке нескольких портов
+
+                    TOS match support - МОДУЛЬ или ДА (Обязательно)
+                    Тип службы
+
+                    recent match support - МОДУЛЬ или ДА (Желательно)
+                    по списку последних адресов
+
+                    ECN match support - МОДУЛЬ или ДА
+                    по полю ECN в пакете IP
+
+                    DSCP match support - МОДУЛЬ или ДА
+                    по полю DSCP в пакете IP
+
+                    AH/ESP match support - НЕТ или МОДУЛЬ
+                    по SPI в заголовках ah esp для пакетов IPSec
+
+                    LENGTH match support - МОДУЛЬ или ДА (Желательно)
+                    по длине пакета
+
+                    TTL match support - НЕТ или МОДУЛЬ
+                    По значению TTL (Time to Life) - времени жизни для пакета
+
+                    tcpmss match support - МОДУЛЬ или ДА (Желательно)
+                    По значению mss (размера сегмента данных) в SYN пакетах.
+
+                    Helper match support - МОДУЛЬ или ДА (Желательно)
+                    Если слежение за пакетом (например ip_conntrack_ftp) сработало
+
+                    Connection state match support - МОДУЛЬ или ДА (Обязательно)
+                    Очень полезная особенность - позволяет фильтровать пакеты, по состоянию соединению (новое соединение, ранее установленное или новое соединение, но связанное с уже установленным)
+
+                    Connection tracking match support - МОДУЛЬ или ДА (Обязательно)
+                    тоже по состоянию соединения, но в случае шлюза - определят состояние прошедших через слежение за соединением (например ip_conntrack_ftp)
+
+                    Owner match suppor - МОДУЛЬ или ДА (Желательно)
+                    По владельцу пакета (пользователь, группа, процесс)
+
+                    Packet filtering - МОДУЛЬ или ДА (Обязательно)
+                    позволяет фильтровать пакеты
+
+                        REJECT target support МОДУЛЬ или НЕТ
+                        Позволяет не просто сбрасывать запрещенные пакеты, а направлять специальный пакет с уведомлением об ошибке по протоколу ICMP
+
+                    Full NAT - МОДУЛЬ или ДА
+                    Таблицы замены адресов - для шлюза обязательно
+
+                    MASQUERADE target support - МОДУЛЬ или ДА
+                    Полезно для модемного соединения - У исходящих пакетов обратный адрес заменяется на текущий адрес шлюза
+
+                    REDIRECT target support - МОДУЛЬ или ДА
+                    Очень полезная вещь - позволяет перенаправлять пакеты по другому адресу или порту. Этот механизм используется в прозрачных прокси.
+
+                    NETMAP target support - МОДУЛЬ или НЕТ
+                    Эта реализация более простого механизма NAT. Подменяется только адрес сети, а адрес машины не подменяется.
+
+                    SAME target support - МОДУЛЬ или НЕТ
+                    Работает как и обычная цепочка подмены адреса источника, но ставит клиентам один адрес для всех соединений.
+
+                    NAT of local connections (READ HELP) - НЕТ
+                    Если Вы хотите чтобы пакеты с самого шлюза тоже проходили цепочки подмены адреса, то включите эту опцию
+
+                    Basic SNMP-ALG support (EXPERIMENTAL) - НЕТ
+                    Поддержка протокола SNMP для NAT
+
+                    Packet mangling - МОДУЛЬ или ДА
+                    Таблица mangle в iptables (перенаправление пакетов ) для шлюза
+
+                        TOS target support - МОДУЛЬ или ДА
+                        ECN target support - МОДУЛЬ или ДА
+                        DSCP target support - МОДУЛЬ или ДА
+                        Цепочки по соответствующим полям в IP пакете
+
+                        MARK target support - МОДУЛЬ или ДА
+                        Для маркировки пакета
+
+                        CLASSIFY target support - МОДУЛЬ или ДА
+                        Для установки приоритета пакета 
+
+                    LOG target suppor - МОДУЛЬ или ДА
+                    Позволяет записать в логи заголовки нужных пакетов
+
+                    ULOG target support - МОДУЛЬ или ДА
+                    Тоже что и LOG, только для Multicast
+
+                    TCPMSS target support - МОДУЛЬ или ДА
+                    Очень полезная опция, если у Вас на шлюзе на сетевых интерфейсах разные MTU (например в случае соединения локальной сети и модемного соединения) . В случае если у Вас происходит зависание приложений при передаче больших пакетов (Почта, FTP), поставьте цепочку
+                    iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS -clamp-mss-to-pmtu
+
+                    ARP tables support - НЕТ или МОДУЛЬ
+                    Поддержка протокола ARP в iptables
+
+                    NOTRACK target support - МОДУЛЬ или НЕТ
+                    Если Вы используете механизм слежения за пакетами, то цель NOTRACK позволит указать пакеты которые НЕ будут проходить этот механизм.
+
+                    raw table support (required for NOTRACK/TRACE) - МОДУЛЬ или НЕТ
+                    Таблица raw. Нужна для целей NOTRACK TRACE. Имеет 
+
+                IPsec user configuration interface МОДУЛЬ или НЕТ
+                Нужно для поддержки Ipsec
+
+                SCTP Configuration (EXPERIMENTAL) - НЕТ
+                поддержка протокола SCTP
+
+                Asynchronous Transfer Mode (ATM) (EXPERIMENTAL) - НЕТ
+                Для сетевого оборудования с поддержкой скоростной сети ATM
+
+                802.1d Ethernet Bridging - НЕТ
+                Для создания моста. Мост объединяет сети. Отличие от шлюза состоит в том, что сети являются как бы продолжением друг друга и используют одну сетевую маску.
+
+                802.1Q VLAN Support - НЕТ
+
+                DECnet Support - НЕТ
+                Поддержка сети DECNET.
+
+                ANSI/IEEE 802.2 LLC type 2 Support - НЕТ
+
+                The IPX protocol - НЕТ
+                Если у Вас есть старые серверы Netware (ниже 5.0) на этом протоколе, то включите
+
+                Appletalk protocol support - НЕТ
+                CCITT X.25 Packet Layer (EXPERIMENTAL) - НЕТ
+                LAPB Data Link Driver (EXPERIMENTAL) - НЕТ
+                Это все экзотика
+
+                Frame Diverter (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+                Интересная опция, позволяет обрабатывать чужие пакеты, которые не предназначались этому компьютеру (как делают мосты и снифферы)
+
+                Acorn Econet/AUN protocols (EXPERIMENTAL) - НЕТ
+                WAN router - НЕТ
+                Это нужно если у Вас есть соответствующее оборудование для работы в качестве шлюза в глобальной сети.
+
+                Fast switching (read help!) -НЕТ (Обязательно)
+                Для быстрой передачи в случае непосредственного соединения двух сетевых карт. Очень мало драйверов поддерживает эту особенность. Эта опция несовместима с Network packet filtering!
+
+                Forwarding between high speed interfaces - НЕТ
+                Очень мало драйверов поддерживает эту особенность. Сделано для выхода из состояния сильной перегрузки
+
+                QoS and/or fair queueing - НЕТ или МОДУЛЬ
+                На самом деле интересная возможность. Позволяет расставить приоритеты протоколов, чтобы определенны пакеты шли в первую очередь, а менее приоритетные - в последнюю
+
+                Network testing - НЕТ (Обязательно)
+                Это нужно для проведения испытаний сети.
+
+            Amateur Radio support - НЕТ
+            Еще одно экзотическое устройство
+
+            IrDA (infrared) support - МОДУЛЬ
+            Устройства с инфра-красной связью (пульты к тюнерам сюда не относятся)
+
+                IrLAN protocol - МОДУЛЬ
+                Протокол эмуляции сетевой карты
+
+                IrNET protocol - МОДУЛЬ
+                Протокол эмуляции PPP устройства. Хорош для быстрого создания соединения между двумя компьютерами.
+
+                IrCOMM protocol - МОДУЛЬ
+                Эмуляция последовательного порта. Хорошо для создания PPP соединения. Можно использовать для подключение к GPRS интернету через мобильный телефон. С устройством можно работать как с обычным модемом посредством программы minicom
+
+                Ultra (connectionless) protocol - НЕТ
+                простой протокол для работы с простыми устройствами (например часы)
+
+                Cache last LSAP - ДА
+                Кэшировать последний LSAP. Рекомендуется включать.
+
+                Fast RRs (low latency) - ДА
+                Использовать быстрый сигнал Receive Ready (готовность приема). Ускоряет обмен данными.
+
+                Debug information - НЕТ
+                Вывод ошибок в логи.
+
+                Infrared-port device drivers
+                Собственно драйверы
+
+                    SIR device drivers
+                    Драйверы для устройств, подключаемых к последовательному порту
+
+                        IrTTY (uses Linux serial driver) - МОДУЛЬ
+                        протокол для работы через последовательный порт
+
+                    Dongle support
+                    Поддержка приемника
+
+                        Serial dongle support - ДА
+                        Поддержка приемника в последовательном порту
+
+                            ESI JetEye PC dongle - МОДУЛЬ
+                            ACTiSYS IR-220L and IR220L+ dongle - МОДУЛЬ
+                            Tekram IrMate 210B dongle - МОДУЛЬ
+                            Parallax LiteLink dongle - МОДУЛЬ
+                            Mobile Action MA600 dongle - МОДУЛЬ
+                            Greenwich GIrBIL dongle - МОДУЛЬ
+                            Microchip MCP2120 - МОДУЛЬ
+                            Old Belkin dongle - МОДУЛЬ
+                            ACTiSYS IR-200L dongle - МОДУЛЬ
+                            Устройства
+
+                    Old SIR device drivers
+                    Старые драйверы
+
+                        IrPORT (IrDA serial driver) - МОДУЛЬ
+                        Альтернатива IrDA. Иногда работает лучше.
+
+                    Old Serial dongle support - ДА
+                    Поддержка приемников (старый драйвер)
+
+                        ESI JetEye PC dongle - МОДУЛЬ
+                        ...
+                        Mobile Action MA600 dong - МОДУЛЬ
+                        Устройства 
+
+                    FIR device drivers
+                    Прочие устройства
+
+                        IrDA USB dongles - МОДУЛЬ
+                        Приемники для usb порта
+
+                        SigmaTel STIr4200 bridge (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+                        NSC PC87108/PC87338 - НЕТ или МОДУЛЬ
+                        Winbond W83977AF (IR) - НЕТ или МОДУЛЬ
+                        Toshiba Type-O IR Port - НЕТ или МОДУЛЬ
+                        SMSC IrCC (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+                        ALi M5123 FIR (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+                        VLSI 82C147 SIR/MIR/FIR (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+                        VIA VT8231/VT1211 SIR/MIR/FIR - НЕТ или МОДУЛЬ
+                        Еще устройства
+
+                Bluetooth support - НЕТ или МОДУЛЬ
+                Поддержка устройств по технологии "Голубого Зуба"
+
+                Network device support (ДА)
+                Сетевые устройства
+
+                    Dummy net driver support - МОДУЛЬ
+                    Пустое сетевое устройство, посланные пакеты на это устройство уходят в никуда.
+
+                    Bonding driver support - НЕТ.
+                    Нужно если например есть 2 линии до одного объекта - их можно объединить программно в одну.
+
+                    EQL (serial line load balancing) support - НЕТ
+                    Тоже самое только для модемов - объединяем две линии в одну быструю.
+
+                    Universal TUN/TAP device driver support - НЕТ
+                    Создание виртуальных сетевых устройств. Для обмена данными с определенными программами.
+
+                    General Instruments Surfboard 1000 - НЕТ
+                    Экзотический модем (для связи через линии кабельного телевидения)
+
+                    ARCnet devices - НЕТ
+                    Для сетевых карт этого типа
+
+                    Ethernet (10 or 100Mbit)
+                    Ethernet (1000 Mbit)
+                    Ethernet (10000 Mbit)
+                    В этих разделах расположены драйверы сетевых карт для самой распространенной сети у нас в стране - Ethernet. Если у Вас есть сетевая карта, найдите там свою и включите в ядро. Узнать какая у Вас карта можно с помощью команды lspci
+
+                    Token Ring devices - НЕТ
+                    Разработанная фирмой IBM спецификация локальной сети. Почти нигде в нашей стране не применяется.
+
+                    Wireless LAN drivers (non-hamradio) & Wireless Extensions - НЕТ
+                    Экзотические устройства.
+
+                    PCMCIA network device support - НЕТ
+                    Карты для шины PCMCIA
+
+                    Wan interfaces support - НЕТ
+                    Устройства для объединения локальных сетей в глобальные через выделенные линии или протокол X.25. Может использоваться как средство подключения к Интернету.
+
+                    FDDI driver support - НЕТ
+                    Для карт FDDI
+
+                    HIPPI driver support (EXPERIMENTAL) - НЕТ
+                    Скоростная связь используемая в кластерах
+
+                    PLIP (parallel port) support - НЕТ
+                    Для соединения компьютеров через параллельный порт.
+
+                    PPP (point-to-point protocol) support - ДА или МОДУЛЬ
+                    Соединение Точка-Точка - как правило, для модемов. Если Вы постоянно работаете с модемом - включите эту и следующие опции в ядро. Если у Вас нет модема можете выключить или сделать модулями
+
+                        PPP multilink support (EXPERIMENTAL) - НЕТ
+                        Объединение нескольких физических линий в одну логическую
+
+                        PPP filtering - ДА
+                        Фильтрация пакетов. Предоставляет статистику соединения (например кол-во сбойных паккетов)
+
+                        PPP support for async serial ports - ДА или МОДУЛЬ
+                        Поддержка последовательных портов и модемов для них
+
+                        PPP support for sync tty ports - НЕТ или МОДУЛЬ
+                        Для высокоскоростного соединения
+
+                        PPP Deflate compression - ДА или МОДУЛЬ (Желательно)
+                        Поддержка протоколов сжатия
+
+                        PPP BSD-Compress compression - ДА или МОДУЛЬ (Желательно)
+                        Поддержка сжатия по протоколу BSD. Если у Вашего провайдера Юникс (BSD или Линукс)
+
+                        PPP over Ethernet (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+                        Поддержка протокола PPP через сетевую карту. Популярно в больших городах для подключения к интернету домашних (и не только) пользователей.
+
+                    SLIP (serial line) support - НЕТ
+                    Подключение через нуль-модемный провод по последовательному порту или по телефонной линии. Раньше широко использовался. Теперь вытеснился PPP
+
+                    Fibre Channel driver support - НЕТ
+                    Протокол для быстрой последовательной передачи данных. Как правило используется в дисках большой емкости. Развитие технологии SCSI, призванное заменить его. Если у Вас есть такие диски, то Вам придется включить опции SCSI support, SCSI generic
+
+                    Traffic Shaper (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+                    Виртуальное сетевое устройство призванное ограничить поток данных. Работает "поверх реального" Исходящий поток данных через это виртуальное устройство можно ограничить.
+
+                    Network console logging support (EXPERIMENTAL) - НЕТ
+                    Позволяет напрявлять сообщения ядра (/var/log/messages) на другой компьютер в сети по протоколу UDP
+
+        ISDN subsystem - НЕТ или МОДУЛЬ
+        Поддержка услуг цифровой телефонной связи. Позволяет использовать и телефон и модем на одной линии одновременно.
+
+            Old ISDN4Linux - НЕТ
+            Старый устаревший драйвер
+
+            CAPI2.0 support - МОДУЛЬ
+            Новый драйвер ISDN
+
+                Verbose reason code reporting (kernel size +=7K) - ДА
+                С этой опцией в случае обрыва соединения будет сообщена более подробная причина разрыва.
+
+                CAPI2.0 Middleware support (EXPERIMENTAL) - НЕТ
+                Расширение возможностей capi
+
+                CAPI2.0 /dev/capi support - МОДУЛЬ (Обязательно)
+                Стандартная поддержка capi
+
+                CAPI2.0 capidrv interface support - МОДУЛЬ
+                Поддержка стандартных для isdn средств. Позволяет использовать механизмы ippp и tty
+
+                CAPI hardware drivers
+                Драйверы устройств
+
+                    Active AVM cards - МОДУЛИ
+                    Поддержка AVM карт
+
+                    Active Eicon DIVA Server cards - НЕТ
+                    Поддержка серверных карт
+
+        Linux Telephony Support - НЕТ
+        Поддержка телефонии.
+
+        Input device support
+        Устройства ввода
+
+            Userland interfaces
+            Интерфейсы устройств ввода. Позволяют программам работать с оборудованием как с символьными устройствами.
+
+            Mouse interface - ДА
+            Итерфейс мыши
+
+            Horizontal screen resolution 1024
+            Vertical screen resolution 768
+            Это нужно для устройства ввода digitazer
+
+            Joystick interface - НЕТ или МОДУЛЬ
+            Поддержка джойстика
+
+            Touchscreen interface - НЕТ
+            Поддержка сенсорных экранов
+
+            Event interface -НЕТ
+            Интерфейс "событий" устройств ввода
+
+            Event debugging - НЕТ
+            Записывает в логи события устройств ввода. Опция интересна тем, что будучи включена, может прочитывать введенные с клавиатуры пароли и записывать в логи.
+
+            Input I/O drivers
+            Драйверы ввода - вывода
+
+                Gameport support - НЕТ или МОДУЛЬ
+                Поддержка всякого рода джойстиков для стандартного игрового порта и порты джойстика в звуковых картах. Некоторые драйверы звуковых карт (см подсказку) сами предоставляют поддержку джойстика, если у Вас такая карта, то эту опцию можно отключить.
+
+                i8042 PC Keyboard controller - МОДУЛЬ
+                Котроллер AT клавиатур
+
+                Serial port line discipline - МОДУЛЬ
+                Поддержка мышей, джойстиков, таблеток и пр. для последовательного порта.
+
+                ct82c710 Aux port controller - НЕТ
+                Контроллер мыши для ноутбука Texas Instruments TravelMate
+
+                Parallel port keyboard adapter - НЕТ
+                Контроллер клавиатуры для параллельного порта.
+
+                PCI PS/2 keyboard and PS/2 mouse controller - НЕТ PCI платы с PS/2 контроллерами клавиатуры и мыши
+
+            Input Device Driver
+            Драйверы устройств
+
+                Keyboard - ДА (обязательно)
+
+                    Sun Type 4 and Type 5 keyboard support - НЕТ
+                    Поддержка клавиатуры Sun для последовательного порта
+
+                    XT Keyboard support - НЕТ
+                    Поддержка старых XT клавиатур
+
+                    Newton keyboard - НЕТ
+                    Поддержка клавиатуры Newton
+
+                Mice - ДА (Обязательно)
+                Поддержка мышки.
+
+                    PS/2 mouse - ДА
+                    Мышка для порта PS/2 (маленький круглый разъем)
+
+                    Serial mousе - ДА или МОДУЛЬ
+                    Поддержка мышки для последовательного порта
+
+                Joysticks - НЕТ
+                Всякого рода джойстики, колеса и пр. игровые манипуляторы
+
+                Touchscreens - НЕТ
+                Сенсорные поверхности. Применяется для создания бесклавиатурных терминалов (тыкаешь пальцем на экране на изображение кнопки OK и она нажимается). Также применяется в ноутбуках как заменитель мышки (touchpad)
+
+                Misc - НЕТ
+                Прочее
+
+                    PC Speaker support - НЕТ
+                    Включение динамика системного блока для вывода всякого рода звуковых сигналов. Уж больно препротивно пищит :-\.
+
+                    User level driver suppor - НЕТ или МОДУЛЬ
+                    Драйвер системы ввода пользовательского уровня.
+
+        Character devices
+        Символьные устройства
+
+            Virtual terminal - ДА (Обязательно)
+            Познакомиться с виртуальным терминалом Вы можете если нажмете кнопки Ctrl-Alt-F1 ... Ctrl-Alt-F7 ... Полезно для решения проблем, когда графика не запускается или приложение намертво вешает всю граф. подсистему. В этом случае входите в терминал, выводите список процессов по команде top или ps -A и убиваете командой killall -9 <название процесса> или kill -9 <номер процесса>
+
+                Support for console on virtual terminal - ДА (Обязательно)
+                Консоль для виртуального терминала. Позволяет ядру выводить ошибки и входить пользователем root в случае загрузки в однопользовательском режиме. Обычно это первый виртуальный терминал. Однако Вы можете это изменить пеердачей ядру параметра console=tty11 и тогда все ошибки будут доступны на 12 терминале (Ctrl-Alt-F12) 
+
+            Non-standard serial port support - НЕТ
+            Нестандартные последовательные порты
+
+            Serial drivers
+            Драйверы последовательного порта
+
+                8250/16550 and compatible serial support - ДА
+                Обычный последовательный COM порт сделан на этих микросхемах
+
+                    Console on 8250/16550 and compatible serial port - НЕТ
+                    Возможность пользователю заходить в систему через последовательный порт.
+
+                    8250/16550 device discovery via ACPI namespace - НЕТ
+                    Обнаружение портов через механизм ACPI
+
+                    Maximum number of non-legacy 8250/16550 serial ports - 4
+                    Максимальное кол-во портов. Обычно выведены на корпус только два (или вообще один)
+
+                    Extended 8250/16550 serial driver options - НЕТ
+                    Расширенные возможности порта
+
+                        Support more than 4 legacy serial port - НЕТ
+                        Поддержка более 4 портов
+
+                        Support for sharing serial interrupts - НЕТ
+                        Когда несколько портов используют одно прерывание
+
+                        Autodetect IRQ on standard ports (unsafe) - НЕТ
+                        Автоопределение прерывания порта (небезопасно)
+
+                        Support special multiport boards - НЕТ
+                        Поддержка специальных многопортовых плат.
+
+                        Support RSA serial ports - НЕТ
+                        Поддержка RSA портов
+
+            Linux InfraRed Controller - МОДУЛЬ
+            Поддержка пультов дистанционного управления по инфракрасной связи. (например для пультов ТВ- тюнеров)
+
+                Maximum LIRC devices -2
+                Количество пультов
+
+                I2C Driver - НЕТ или МОДУЛЬ
+                См подсказку по этому пункту. Если у Вас есть плата из указанного там списка, включайте
+
+                GPIO Driver - МОДУЛЬ
+                Большинство пультов для ТВ-тюнера используют этот драйвер
+
+                BT829 Driver - НЕТ
+                Для тюнеров на этом чипе (см команду lspci -vv)
+
+                IT87 Driver - НЕТ
+                Для тюнеров на этом чипе (см команду lspci -vv)
+
+                ATI USB Driver - МОДУЛЬ
+                Для пультов через USB порт
+
+                Parallel Driver - НЕТ
+                Для пультов через параллельный порт
+
+                Serial Driver - НЕТ или МОДУЛЬ
+                Для пультов через последовательный порт. Если у Вас один из Homebrew Animax Irdeo включите этот модуль, выберите в подменю тип и укажите какой COM порт использовать
+
+                SIR Driver - НЕТ или МОДУЛЬ
+                Для чипа StrongARM SA1100.
+
+            Unix98 PTY support - ДА
+            Legacy (BSD) PTY support Поддержка псевдотерминалов в Unix стиле
+
+                Legacy (BSD) PTY support - НЕТ
+                Псевдотерминалы в BSD стиле.
+
+                Maximum number of Unix98 PTYs in use (0-2048) - 256
+                Кол-во псевдотерминалов.
+
+            Parallel printer support - МОДУЛЬ
+            Принтер подключаемый к параллельному порту
+
+                Support for console on line printer - НЕТ
+                Чтобы ядро печатало свои сообщения на матричный (или другой "сырой") принтер
+
+            Support for user-space parallel port device drivers - НЕТ
+            Возможность программам получать доступ через специальные файлы к устройствам но этом порту
+
+            Texas Instruments parallel link cable support - НЕТ
+            Для калькулятора Texas Instruments
+
+            Mice -- Bus Mouse Support НЕТ или МОДУЛЬ
+            В основном для ноутбуков (мыши, треболы ...)
+
+            QIC-02 tape support - НЕТ
+            Поддержка SCSI накопителя на магнитной ленте
+
+            IPMI - IPMI top-level message handler - НЕТ или МОДУЛЬ
+            Для датчиков температуры, напряжения и пр.
+
+            Watchdog Cards -- Watchdog Timer Support - НЕТ
+            Поддержка "сторожевой собаки".Это карты, которые проверяют не завис ли сервер (открыть файл на запись). Если сервер завис или не отвечает, то он перегружается. Если у Вас нет таких карт, можно поставить программную собаку Software watchdog, только не всегда это поможет. Если сбоит аппаратура, то ядро может просто зависнуть.
+
+            Intel/AMD/VIA HW Random Number Generator support - НЕТ
+            Поддержка генераторов случайных чисел, встроенных в материнскую плату
+
+            /dev/nvram support НЕТ или МОДУЛЬ
+            Поддержка устройства CMOS памяти (аппаратные часы)
+
+            Enhanced Real Time Clock Support - ДА или МОДУЛЬ
+            Поддержка таймера. Есть на каждой PC машине
+
+            Double Talk PC internal speech card support - НЕТ
+            Плата - генератор речи
+
+            Siemens R3964 line discipline - НЕТ
+            Для устройств по протоколу Siemens R3964 packet
+
+            Applicom intelligent fieldbus card support - НЕТ
+            Для карт Applicom intelligent
+
+            Sony Vaio Programmable I/O Control Device support (EXPERIMENTAL) - НЕТ
+            Контроллер ввода-вывода для лаптопов Sony Vaio
+
+            Ftape, the floppy tape device driver - НЕТ
+            Контроллеры накопителей на ленте
+
+            /dev/agpgart (AGP Support) - ДА (Обязательно)
+            Поддержка шины AGP. Этой шины нет только на старых материнских платах. Выберите соответствующую Вашему чипсету модель. Команда lspci Вам в этом поможет
+
+            Direct Rendering Manager (XFree86 4.1.0 and higher DRI support) - ДА (если есть поддержка вашей карты)
+            Поддержка DRI для видеокарт
+
+            PCMCIA character devices
+            Устройства на шинеPCMCIA
+
+                SyncLink PC Card support - НЕТ
+                Сетеввая карта с портами RS-232, V.35, RS-449, RS-530, и X.21
+
+            ACP Modem (Mwave) support - НЕТ
+            Для винмодемов ACP
+
+            RAW driver (/dev/raw/rawN) (OBSOLETE) - НЕТ
+            Для прямого доступа к устройствам. Устаревшая особенность, которую обещают убрать в ветке 2.7
+
+            Hangcheck timer - ДА
+            Проверка на зависание. Может просто напечатать сообщение или перегрузить машину.
+
+        I2C support - МОДУЛЬ
+        Протокол передачи данных с различными микроконтроллерами. Эта опция нужна для опроса аппаратных датчиков и для плат ТВ захвата (ТВ-тюнеры)
+
+            I2C device interface - МОДУЛЬ
+            Для доступа программ к шине I2C
+
+            I2C Algorithms
+            Алгортмы
+
+                I2C bit-banging interfaces - МОДУЛЬ
+                Алгоритм нужный для функционирования ТВ тюнеров и программ слежения за датчиками
+
+                I2C PCF 8584 interface - НЕТ или МОДУЛЬ
+                Для адаптеров серии PCF
+
+            I2C Hardware Bus support - МОДУЛИ
+            Здесь Вы найдете драйвера устройств. Нужные выберите как модули.
+
+            I2C Hardware Sensors Chip support - МОДУЛИ
+            Драйверы датчиков. Посмотрите какой у Вас чип (команда lspci Вам поможет) и выберите нужные модулями
+
+            Other I2C Chip support - МОДУЛИ
+            Микросхемы на базе Philips и Epson
+
+            I2C Core debugging messages
+            I2C Algorithm debugging messages
+            I2C Bus debugging messages
+            I2C Chip debugging messages
+            Отладочный вывод. Для ускорения ядра выключаем.
+
+        Misc devices
+        Прочие устройства
+
+            Device driver for IBM RSA service processor - НЕТ
+            Для серверов IBM
+
+        Multimedia devices
+        Устройства мультимедии
+
+            Video For Linux - МОДУЛЬ или ДА
+            Поддержка устройств видеозахвата, тв-приемников и радио-приемников.
+
+                Video Adapters - МОДУЛЬ
+                Выберите модуль вашей карты. Команда lspci -vv поможет Вам в этом Большинству ТВ-тюнеров подойдет этот драйвер
+
+                    BT848 Video For Linux - МОДУЛЬ
+                    ...
+                    Т.к. один модуль может соответствовать нескольким картам и не всегда тип тюнера возможно определить автоматически, то Вам возможно придется указать тип вашей карты вручную. Для этого Вам надо добавить параметры модуля в строке /etc/modprobe.conf (например так -options bttv radio=1 card=78 ). Номер карты см. в файлах /usr/src/linux-2.6.7-my/Documentation/video4linux/CARDLIST*
+
+                Radio Adapters
+                Платы - радиопремники. Если у Вас есть такой - выберите из списка. Если у Вас совмещенный ТВ и радио приемник, то здесь не надо ничего выбирать. Драйвер ТВ-приемника, как правило, имеет поддержку таких встроенных радиоприемников. (добавьте параметр radio=1 к Вашему модулю на ТВ тюнер в /etc/modules.conf)
+
+            Digital Video Broadcasting Devices - НЕТ
+            Поддержка ТВ вещательных карт ?
+
+        Graphics support
+        Поддержка графики.
+
+            Support for frame buffer devices - ДА (Желательно)
+            Поддержка работы в режиме framebuffer. Позволяет получить консоль в графическом режиме. Что в свою очередь позволяет смотреть фильмы на старых медленных компьютерах, без наличия графической среды. Кроме этого необходимо для bootsplash (графическая загрузка)
+
+                Permedia2 support - НЕТ
+                Для карт Graphic Blaster Exxtreme
+
+                CyberPro 2000/2010/5000 support - НЕТ
+                Поддержка видеокарт этой модели
+
+                Chips 69000 display support - НЕТ
+                Карты на этом чипе
+
+                IMS Twin Turbo display support - НЕТ
+                Плата, которая ставиться на Макинтошах (Mac)
+
+                VGA 16-color graphics support - НЕТ
+                Для старых видеокарт
+
+                VESA VGA graphics support - ДА
+                Практически все видеокарты поддерживают этот режим. Позволяет выводить при загрузке ядра изображение пингвина.
+
+                Hercules mono graphics support - НЕТ
+                Очень старые двухцветные мониторы
+
+                nVidia Riva support - НЕТ
+                Поддержка карт Nvidia. На моем GeForce почему-то работает нестабильно.
+
+                Matrox acceleration - НЕТ
+                ATI Radeon display support (old driver)- НЕТ
+                ATI Radeon display support - НЕТ
+                ATI Rage128 display support - НЕТ
+                ATI Mach64 display support - НЕТ
+                SIS acceleration - НЕТ
+                NeoMagic display support - НЕТ
+                IMG Kyro support - НЕТ
+                3Dfx Banshee/Voodoo3 display support - НЕТ
+                3Dfx Voodoo Graphics (sst1) support - НЕТ
+                Trident support - НЕТ
+                Это все драйверы устройств. Вы можете включить поддержку вашей видеокарты, однако VESA режим безопаснее.
+
+                Virtual Frame Buffer support (ONLY FOR TESTING!) - НЕТ (Обязательно)
+                Это только для разработчиков
+
+            Console display driver support
+            Графическая консоль. Позволяет, к примеру, смотреть видео в консоли без графичекой среды. Необходима для bootsplash (графическая загрузка)
+
+                VGA text console - ДА (обязательно)
+                Консоль в текстовом режиме VGA
+
+                    Video mode selection support - ДА (Обязательно)
+                    Необходимо для выбора разрешения консоли. К примеру, если ядру передать параметр VGA=791, то консоль будет в разрешении 1024х768, если передать vga=ask, то Вы сможете выбрать разрешение из нескольких вариантов при загрузке.
+
+                MDA text console (dual-headed) (EXPERIMENTAL) - НЕТ
+                Для очень старых монохромных и MGA видеокарт
+
+                Framebuffer Console support - ДА
+                Обязательно для bootsplash.
+
+                    Select compiled-in fonts - НЕТ
+                    Поддержка встроенных шрифтов. Если Вы используете русский, Вам это не надо, - будут проблемы с русификацией.
+
+            Logo configuration - ДА
+            Вывод при загрузке ядра изображения пингвина в верхнем левом углу
+
+                Standard black and white Linux logo - НЕТ
+                Черно-белое изображение
+
+                Standard 16-color Linux logo -ДА
+                16 цветное
+
+                Standard 224-color Linux logo - ДА
+                224 цветное
+
+            Bootsplash configuration - ДА
+            Позволяет сделать графическую анимированную загрузку Линукса. Можно включить передачей ядру параметра splash=silent
+
+        Sound card support - ДА (Обязательно)
+        Поддержка звуковой карты. Почти все материнские платы сейчас имеют встроенную звуковую карту.
+
+            Advanced Linux Sound Architecture - ДА (Обязательно)
+            Новые драйверы звука.
+
+                Sequencer support - ДА
+                Для поддержки MIDI
+
+                    Sequencer dummy client - НЕТ или МОДУЛЬ
+                    Перенаправляет события MIDI со входа сразу на выход.
+
+                OSS API emulation - ДА (Обязательно)
+                Эмуляция старых драйверов. Множеству программ, сделанных с выводом звука только на OSS это необходимо
+
+                    OSS Mixer API - ДА (Обязательно)
+                    OSS PCM (digital audio) API - ДА (Обязательно)
+                    OSS Sequencer API - ДА (Обязательно)
+                    Эмуляция устройств OSS
+
+                RTC Timer support - ДА
+                Использовать системный таймер для работы звука.
+
+                Verbose printk - НЕТ
+                Debug - НЕТ
+                Для вывода в логи отладочной информации.
+
+                Generic devices
+                ISA devices
+                PCI devices
+                ALSA USB devices
+                PCMCIA devices
+                В этих разделах Вы можете включить вашу звуковую карту. Лучше драйвер включить в ядро, а не делать отдельным модулем. В определении вашей карты Вам поможет утилита lspci.Если Вы не видите нигде названия вашей встроенной карты, попробуйте в разделе PCI следующий драйвер
+                Intel i8x0/MX440, SiS 7012; Ali 5455; NForce Audio; AMD768/8111 - ДА
+
+            Open Sound System (DEPRECATED) - НЕТ
+            Устаревшая система звука. Т.к. новые ALSA драйверы умеют эмулировать OSS, включать эту опцию не нужно. Если ваша звуковая карта ну никак не определяется в ALSA, либо работает неправильно, Вы можете попробовать старые драйверы
+
+        Support for USB - ДА
+        Поддержка порта USB
+
+            USB verbose debug messages - НЕТ
+            Вывод отладочной информации в логи
+
+            USB device filesystem - ДА
+            в каталоге /proc/bus/usb будет выведена информация о устройствах
+
+            Enforce USB bandwidth allocation (EXPERIMENTAL) - НЕТ
+            Dynamic USB minor allocation (EXPERIMENTAL) - НЕТ
+            Экспериментальные опции
+
+            USB Host Controller Drivers
+            Контроллеры USB
+
+                EHCI HCD (USB 2.0) support - ДА
+                поддержка USB 2.0. Кроме этого необходимо включить один из контроллеров шины
+
+                OHCI HCD support - НЕТ
+                UHCI HCD (most Intel and VIA) support - ДА
+                Контроллеры USB. Как правило, подходит UHCI контроллер, однако на моей рабочей плате с чипсетом SIS (см lspci) работает только OHCI драйвер
+
+            USB Device Class drivers
+            Классы устройств
+
+                USB Audio support - НЕТ
+                Звуковые устройства
+
+                USB Bluetooth TTY support - НЕТ
+                Устройства по технологии "голубого зуба". Эта опция не совместима с Bluetooth support
+
+                USB MIDI support - НЕТ
+                MIDI устройства
+
+                USB Modem (CDC ACM) support - НЕТ
+                Модемы, платы ISDN
+
+                USB Printer support - МОДУЛЬ или ДА
+                Принтеры
+
+                USB Mass Storage support - МОДУЛЬ или ДА
+                Устройства хранения информации. Сюда же входят флешки, цифровые камеры. В открывшемся разделе можно выбрать поддержку конкретных устройств. Мой фотоаппарат работает, даже когда все подопции выключены.
+
+                USB Human Interface Devices (HID)
+                USB Human Interface Device (full HID) support- НЕТ или ДА
+                Драйверы связи с пользователем. Клавиатуры, мышки, таблетки и пр.
+
+                    HID input layer support - Да (Обязательно)
+                    Необходимо для работы клавиатур и мышей по USB
+
+                    Force feedback support (EXPERIMENTAL) - НЕТ
+                    /dev/hiddev raw HID device support - НЕТ
+                    Через этот файл устройства могут работать источники бесперебойного питания
+
+                    USB HID Boot Protocol drivers - НЕТ
+                    Поддержка "простых" мышей и клавиатур- рекомендуется выключить
+
+                Aiptek 6000U/8000U tablet support - НЕТ
+                ...
+                X-Box gamepad support - НЕТ
+                Разнообразные таблетки и джойстик на X-Box
+
+            USB Imaging devices
+            Устройства захвата изображения.
+
+                USB Mustek MDC800 Digital Camera support (EXPERIMENTAL) - НЕТ
+                Цифровая камера Mustek MDC800
+
+                Microtek X6USB scanner support - НЕТ
+                HP53xx USB scanner support - НЕТ
+                USB сканеры. Теперь большинство сканеров поддерживается на уровне библиотек (качайте свежий sane).
+
+            USB Multimedia devices
+            Мультимедиа устройства. Драйвер DABUSB (радиоприемник) и драйверы вебкамер.
+
+            USB Network adaptors
+            Сетевые адаптеры.
+
+            USB port drivers
+            Добавочные порты. В основном последовательные.
+
+            USB Miscellaneous drivers
+            Прочие устройства
+
+        Support for USB Gadgets - НЕТ
+        USB - протокол соединения одного узла (компьютер) и до 127 устройств периферии (принтеры, сканеры ...). Эта опция нужна когда компьютер выступает не в роли главного узла сети USB, а периферии, которая контролируется другим узлом. Может использоваться для создания сети на основе USB
+
+File systems "Файловые системы"
+
+    Second extended fs support - ДА (Обязательно)
+    Поддержка стандартной нежурналируемой файловой системы. Идеальна для раздела /boot. Обязательно встраивать, если используете initrd и если корневая ФС - ext3.
+
+        Ext2 extended attributes - НЕТ или ДА
+        Расширенные атрибуты.
+
+    Ext3 journalling file system support - ДА (Обязательно)
+    стандартная журналируемая ФС. Идеальна для хранения музыки, личных файлов и др. несистемных файлов. Славится своей надежностью. Кроме факта что она журналируемая, имеет счетчики подключений: по кол-ву подключений и по времени. Если счетчик превысил заданное значение, ФС принудительно проверяется при загрузке линукса. В принципе, ext3 - это ext2 + журнал
+
+        Ext3 extended attributes - НЕТ или ДА
+        Расширенные атрибуты. Для сервера полезная опция, для рабочей станции - нет.
+
+        Ext3 POSIX Access Control Lists - ДА или НЕТ
+        Поддержка ACL - расширенного механизма разграничения доступа
+
+        Ext3 Security Labels - НЕТ или ДА
+        Поддержка различных моделей секретности
+
+    JBD (ext3) debugging support - НЕТ
+    Отладка ФС ext3
+
+    Reiserfs support - ДА или МОДУЛЬ (Желательно)
+    Обязательно нужно встроить если корень под ReiserFS. Очень быстрая журналируемая ФС. Славится своей быстрой работой с маленькими файлами, которых в линуксе очень много. Идеальна для корня (/) и для домашнего раздела /home
+
+        Enable reiserfs debug mode - НЕТ
+        Отладка reiserfs.
+
+        Stats in /proc/fs/reiserfs - ДА или НЕТ
+        Добавочная информация по разделам в файле /proc/fs/reiserfs
+
+        Reiserfs extended attributes - НЕТ или ДА
+        Расширенные атрибуты. Для сервера полезная опция, для рабочей станции - нет.
+
+        Reiserfs POSIX Access Control Lists - ДА или НЕТ
+        Поддержка ACL - расширенного механизма разграничения доступа
+
+        Reiserfs Security Labels - НЕТ или ДА
+        Поддержка различных моделей секретности
+
+    JFS filesystem support - МОДУЛЬ или НЕТ
+    Журналируемая ФС от фирмы IBM. Для любителей
+
+    XFS filesystem support - МОДУЛЬ
+    Очень достойная ФС. Дает высокие характеристики при работе с большими файлами. Если Вы занимаетесь видеомонтажем - это точно для вас.
+
+        Realtime support (EXPERIMENTAL) - НЕТ (Обязательно)
+        Поддержка подразделов, пока не реализовано полностью
+
+        Quota support - ДА (Желательно)
+        Поддержка квот. Квотами можно ограничить задать для каждого пользователя свой максимальный размер используемого дискового пространства
+
+        Security Label support - ДА или НЕТ
+        Поддержка различных моделей секретности
+
+        POSIX Access Control Lists - ДА или НЕТ
+        Поддержка ACL - расширенного механизма разграничения доступа
+
+    Minix fs support - НЕТ или МОДУЛЬ
+    Применяется для маленьких дисков и дискет.
+
+    ROM file system support - НЕТ
+    Файловая система с запретом записи. Может применяться при создании initrd, загрузочных дисков. Преимущества этой ФС - Системная область самой ФС занимает мало места, позволяет записать больше файлов при том же объеме
+
+    Quota support - ДА
+    Поддержка квот. Квотами можно ограничить задать для каждого пользователя свой максимальный размер используемого дискового пространства.
+
+        Old quota format support - ДА
+        Старый формат (использовался в ядрах 2.4) Если ваш дистрибутив основан на 2.4 выбирайте эту опцию
+
+        Quota format v2 support - НЕТ
+        Новый 32 битный механизм. Нужны свежие утилиты для работы с quota
+
+    Kernel automounter support - НЕТ
+    Kernel automounter version 4 support (also supports v3) - ДА
+    Автоматическое монтирование ФС (удаленных, сменных носителей) при входе в соответствующий каталог. См. Настройки службы autofs
+
+    CD-ROM/DVD Filesystems
+    ФС для компакт - дисков
+
+        ISO 9660 CDROM file system support - ДА (Обязательно)
+        Стандартная ФС для дисков с данными. Лучше включить эту опцию в ядро. т.к. модули в ядрах 2.4 и 2.6 называются по разному.
+
+            Microsoft Joliet CDROM extensions - ДА (Обязательно)
+            Несмотря на фирму изготовителя - довольно полезная вещь. Позволяет записывать диски так, чтобы русские файлы нормально отображались при любой кодировке.
+
+            Transparent decompression extension - ДА или НЕТ
+            Прозрачное сжатие данных. Позволяет читать диски с расширением RockRidge. 
+
+        UDF file system support - ДА (Обязательно)
+        Для дисков записанных в пакетном режиме. Используется для работы с CD как с дискетой. Этот драйвер используется только для чтения этих дисков. Для записи дисков Вам нужно будет наложить заплатку на ядро с поддержкой пакетной записи и установить пакет udftools. Как подключать диски в режиме записи см. в подсказке опции Packet writing
+
+    DOS/FAT/NT Filesystems
+    Поддержка ФС от micro$oft
+
+        DOS FAT fs support - МОДУЛЬ
+        поддержка DOS FAT32
+
+            MSDOS fs support - МОДУЛЬ (Обязательно)
+            Без этого модуля файлы записанные на раздел FAT32 будут читаться нормально до первого запуска scandisk.exe- после него имена файлов превратятся в набор крякозяблов.
+
+            VFAT (Windows-95) fs support - МОДУЛЬ
+            FAT32 для 95 98 маздая.
+
+        NTFS file system support - МОДУЛЬ
+        Поддержка NTFS
+
+            NTFS debugging support - НЕТ
+            Отладка
+
+            NTFS write support - НЕТ
+            Частичная и безопасная поддержка записи. Запись пока не реализована полностью. Работает только изменение существующих файлов (без изменения их размеров). Зачем такое вообще нужно? Вы можете разместить на разделе NTFS файл - образ, создать на нем файловую систему и работать как с обычным разделом Линукса. Если Вас интересует полная поддержка записи см http://captive.sourceforge.net
+
+    Pseudo filesystems
+    Виртуальные файловые системы. Не занимают место на диске.
+
+        /proc file system support - ДА (ОБЯЗАТЕЛЬНО)
+        Виртуальная ФС, не занимает место на диске. Нужна для просмотра и изменения параметров ядра, оборудования ,процессов.
+
+        /sysfs file system support - ДА (ОБЯЗАТЕЛЬНО)
+        Появившаяся в ядрах 2.6 фс, которая похожа на /proc но имеет ряд преимуществ.
+
+        /dev file system support (OBSOLETE) - ДА (для пользователей Mandrakelinux) или НЕТ (Redhat)
+        Считается устаревшей, однако на самом деле очень неплоха. При использовании этой ФС у Вас в каталоги /dev будут только те файлы, которые у Вас завязаны на устройства. Файлы-устройства создаются автоматически. Имеет смысл включать в дистрибутивах, которые имеют поддержку devfs (Mandrakelinux)
+
+            Automatically mount at boot - ДА
+            Подключать сразу при загрузке ядра. Можно будет отключить только передачей ядру параметра "devfs=nomount"
+
+            Debug devfs - НЕТ
+            Отладка
+
+        /dev/pts file system for Unix98 PTYs - НЕТ или ДА
+        Для виртуальной ФС /dev/pts . Если включено "Unix98 PTY support", то надо включить и эту опцию
+
+        Virtual memory file system support (former shm fs) - ДА или НЕТ
+        Временная виртуальная память. Файлы хранятся в памяти и в swap разделе. После перезагрузки все теряется. Хороша для /tmp.
+
+        HugeTLB file system support - НЕТ Нет подсказки. Как-то я обхожусь без нее.
+
+        Supermount removable media support - ДА или МОДУЛЬ Виртуальная ФС позволяющая работать со сменными устройствами без из подключения командой mount и отключения через umount. Очень полезна для компакт-дисков. Для работы с этой ФС Вам нужно будет добавить в файл /etc/fstab такие строки
+        none /mnt/floppy supermount dev=/dev/fd0,fs=ext2:vfat,--,umask=0,iocharset=koi8-r,sync,codepage=866,users 0 0
+        none /mnt/cdrom supermount dev=/dev/hdd,fs=udf:iso9660,tray_lock=never,--,umask=0,iocharset=koi8-r,sync,codepage=866,users 0 0
+        однако возможны проблемы с программами, которые требую прямого доступа к устройствам (например утилита форматирования дискет или программа записи компакт дисков K3b). Для устранения этой проблемы перед запуском отмонтируйте каталоги /mnt/floppy /mnt/cdrom. Лучше написать простенький скрипт.
+
+            Enable supermount debug code - НЕТ
+            Отладка. 
+
+    Miscellaneous filesystems
+    Прочие ФС.
+
+        ADFS file system support (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+        Диски под операционную систему RiscOS.
+
+        Amiga FFS file system support (EXPERIMENTAL) - НЕТ или МОДУЛЬ.
+        Полезно для обладателей эмулятора Амиги uae. Несмотря на экспериментальный статус, успешно монтирует образы дискет и изменяет их.
+
+        Apple Macintosh file system support (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+        Диски и дискеты для МаcOS
+
+        BeOS file systemv(BeFS) support (read only) (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+        Для BeOS
+
+        BFS file system support (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+        Для SCOтских дисков.
+
+        EFS file system support (read only) (EXPERIMENTAL) - НЕТ или МОДУЛЬ
+        Для SGI IRIX
+
+        Compressed ROM file system support - НЕТ или МОДУЛЬ
+        Для сжатых ФС только для чтения. Пример использования таких ФС - дистрибутив Knoppix
+
+        FreeVxFS file system support (VERITAS VxFS(TM) compatible) - НЕТ или МОДУЛЬ
+        Для SCO, HP UX, Sunsoft Solaris
+
+        OS/2 HPFS file system support - НЕТ или МОДУЛЬ
+        Для OS/2
+
+        QNX4 file system support (read only) - НЕТ или МОДУЛЬ
+        Для ОС QNX 4 и QNX 6
+
+        System V/Xenix/V7/Coherent file system support - НЕТ или МОДУЛЬ
+        Для SCO, Xenix, Wyse, UnixWare, Dell Unix
+
+        UFS file system support (read only) - НЕТ или МОДУЛЬ
+        SunOS, FreeBSD, NetBSD, OpenBSD и NeXTstep
+
+    Network File Systems
+    Сетевые ФС
+
+        NFS file system support - НЕТ или МОДУЛЬ
+        Для Unix сетей
+
+        NFS server support - НЕТ или МОДУЛЬ
+        Для Unix сетей. Возможность быть NFS файл сервером
+
+        SMB file system support (to mount Windows shares etc.) - МОДУЛЬ или ДА
+        Для сетей с практически любыми ОС (Linux, Unix, MacOS и маздай)
+
+            Use a default NLS - ДА (Обязательно)
+            Поддержка национальных кодовых страниц.
+
+                Default Remote NLS Option - cp866 (Обязательно)
+                Для маздая нужна эта кодировка
+
+        CIFS support (advanced network filesystem for Samba, Window and other CIF) - МОДУЛЬ
+        Расширение протокола SMB. Имеет больше возможностей и поддержку Юникода.
+
+        NCP file system support (to mount NetWare volumes) - НЕТ или МОДУЛЬ
+        Возможность подключиться к серверу Novell Netware (если версия сервера ниже 6.0 - обязательно включите сетевой протокол IPX)
+
+        Coda file system support (advanced network fs) - НЕТ или МОДУЛЬ
+        Продвинутая версия сервера для Unix сетей. Отличается лучшей защищенностью, поддержкой кеширования.
+
+        Andrew File System support (AFS) (Experimental) - НЕТ
+        Экспериментальная ФС
+
+    Partition Types
+    Advanced partition selection - НЕТ
+    Расширенная поддержка таблиц разделов винчестера. Для Amiga Atari Mac и пр. систем. Если Вы работаете с винчестерами только в Линукс Windows и Dos, то можно не включать.
+
+    Native Language Support
+    Поддержка национальных кодовых страниц.Обязательно настройте на свою страну, Вы сможете подключать диски, не указывая каждый раз кодировку.
+
+        Default NLS Option - koi8-r
+        Кодовая страница, которая у Вас установлена по умолчанию. Может быть cp1251 utf8. См вывод команды locale charmap
+
+        Codepage 866 (Cyrillic/Russian) - ДА
+        NLS KOI8-R (Russian) - ДА
+        NLS UTF8 - МОДУЛЬ
+        Из всех кодовых страниц выбираете только эти три. (Если у Вас основная кодировка отличается от KOI8-R, то включите и ее) Ту кодовую страницу, что у Вас установлена по умолчанию, - включайте в ядро, остальные можно сделать модулями.
+
+Profiling support "Поддержка профилей" - НЕТ
+
+    Экспериментальная функция для поддержки OProfile
+
+NeTraverse Win4Lin Support - ДА
+
+    Поддержка win4lin - программы для запуска windows 95 98 Me в окошке.
+
+Kernel hacking "Взлом ядра"
+
+    Kernel debugging - НЕТ или ДА
+    Отладка ядра. Если Вы гуру или у Вас глючное железо. Эти опции затормаживают систему, если у Вас нет острой необходимости, не включайте их.
+
+    Early printk - НЕТ
+    Для первоочередного вывода сообщений. Если ядро вешается втихую, без сообщений об ошибках
+
+        Check for stack overflows - НЕТ или ДА
+        Переполнение стэка.
+
+        Stack utilization instrumentation- НЕТ (Желательно)
+        Преодически сбрасывает в логи состояние стека.Сильно затормаживает запуск процессов
+
+        Debug memory allocations - НЕТ или ДА
+        Распределение памяти.
+
+        Magic SysRq key - ДА или НЕТ
+        Самая полезная функция из этого раздела для простого пользователя. Если компьютер завис и не реагирует на команды переключения консоли. Вы можете нажать Alt-PrintScreen-s для записи кеша дисков или Alt-PrintScreen-i (Убить все процессы за исключением init). Механизм нажатия такой: - Нажать Alt - Нажать PrintScreen - Отпустить Alt - Нажать нужную кнопку - Отпустить все. Полный список команд см. в Documentation/sysrq.txt
+
+        Spinlock debugging - НЕТ или ДА
+
+        Page alloc debugging - НЕТ (Желательно)
+        Работа со страницами памяти. Может сильно затормозить систему. Для проверки памяти.
+
+        Compile the kernel with debug info - НЕТ (Желательно)
+        Для отладки ядра. Сильно увеличивает размер ядра.
+
+    Sleep-inside-spinlock checking - НЕТ
+    Проверка состояния ожидания.
+
+    Compile the kernel with frame pointers - НЕТ
+    Отладка ядра - для вывода в логи ошибок.
+
+    Use 4Kb for kernel stacks instead of 8Kb - НЕТ или ДА.
+    Использовать 4Килобайта стека для каждой задачи, а не 8К как обычно.
+
+Security options "Настройка безопасности"
+
+    Позволяет увеличить защищенность системы. Можно например запретить запуск программ с привилегиями root без вставленного в порт USB специального ключа (Root Plug). Или с помощью системы SELinux ограничить возможности доступа к файлам самого root! Включайте эти опции только если Вы знаете что делаете.
+
+Cryptographic options "Шифрование"
+
+    Шифрование нужно, например, для создания закодированных файловых систем
+
+    HMAC support - НЕТ или ДА
+    Шифрование, небходимое для IPSec
+
+    Null algorithms - НЕТ или МОДУЛЬ
+    MD4 digest algorithm - НЕТ или МОДУЛЬ
+    MD5 digest algorithm - НЕТ или МОДУЛЬ
+    ..
+    Testing module - НЕТ или МОДУЛЬ
+    Здесь Вы можете выбрать механизмы шифрования. В принципе, на мой взгляд достаточно одного AES, но если Вы желаете, можете все алгоритмы сделать модулями. В МandrakeLinux Вы можете легко создавать и подключать зашифрованные образы с помощью утилиты drakloop. Для этого не забудьте включить loop устройство в секции Block devices 
+
+Library routines "Библиотечные функции"
+
+    Используется для предоставления модулям функций CRC32 CRC32c. Можете включить
+
+
+Итак, настройка завершена, сохраните настройки и выходите из программы настройки. Все настройки сохраняются в файле .config (скрытый). В будущем, если Вы будете переходить на следующую версия ядра, Вы можете после установки заплаток скопировать этот файл в каталог с исходниками ядра и выполнить в консоли команду make oldconfig. В этом случае Вам не придется отвечать на все эти вопросы, Вам будут заданы вопросы только по новым возможностям.
+
+3.5 Сборка и установка
+
+Теперь осталось собрать ядро. Процесс сборки и установки ядра можно выполнить одной командой (от пользователя root)
+
+make bzImage modules modules_install install
+
+а можно разбить на несколько этапов
+
+от простого пользователя:
+make bzImage
+(собрать ядро)
+make modules
+(собрать модули)
+
+от пользователя root:
+make modules_install
+(установить модули)
+make install
+(установить ядро)
+
+Первый вариант хорош тем, что Вы может задать сразу все команды и отвлечься от компьютера. Второй вариант более правильный идеалогически. Процесс сборки занимает большую часть времени.Поэтому я обычно делаю так:
+
+от простого пользователя:
+make
+su
+make modules_install install
+
+Команду make bzImage modules теперь можно заменить командой make
+
+Процесс в зависимости от мощности процессора и кол-ва выбранных модулей может занимать много времени, Вы успеете испить чашечку кофе или принять ванну.
+
+Если Вы слишком увлекаетесь заплатками, то ядро может и не собраться (на определенном этапе сборка прервется и Вы увидите код ошибки). В этом случае Вам придется либо отключать модули на которых происходит ошибка, либо повторять все сначала уже с меньшим кол-вом заплаток. Если у Вас ядро без заплаток не желает компилироваться, то это говорит о неправильной установке дистрибутива, либо нехватки компилятора или библиотек. Попробуйте установить дистрибутив в режиме "Разработка" (не забудьте добавить КДЕ и другие пользовательские программы). Дистрибутивы ALT Linux Junior и ASPLinux ChipEdition - на самом деле не дистрибутивы, а, говоря интеллигентно, демо-версии, поэтому не удивляйтесь, если у Вас ничего не выйдет. Если у Вас команда make install завершается ошибкой, не впадайте в панику, как правило это ошибка скрипта installkernel, ядро все равно создается, а ошибки добавления в загрузчик записи исправим вручную.
+
+Когда ядро будет собрано, у Вас должны появиться следующие файлы
+
+/boot/vmlinuz-2.6.7-my
+/boot/System.map-2.6.7-my
+/boot/initrd-2.6.7-my.img
+и каталог модулей
+/lib/modules/2.6.7-my
+
+Ядро установлено, теперь надо настроить загрузчик.
+
+4. Настройка загрузчика
+
+После установки ядра, как правило, автоматически настраивается и загрузчик, если этого не произошло или Вы хотите подправить что-либо, то читайте дальше
+
+Три самых распространенных загрузчика
+
+    LILO
+    GRUB
+    ASPLoader
+
+Первый из них - это самый старый (но это не значит самый обделенный возможностями). Отличается хорошей надежностью и большими возможностями.
+
+GRUB - самый мощный по возможностям загрузчик. Очень хорош, можно поставить картинку из 14 цветной палитры.
+
+У ASPLoader есть две оригинальные особенности - поддержка мыши и простота. Однако дизайн у него уж больно смахивает на маздаевский. Да и по возможностям слабоват.
+
+!!! Никогда не удаляйте настройки старого ядра, это может привести к невозможности загрузки системы обычным образом, если сделанное вами ядро не работоспособно !!!
+
+4.1 Настройка LILO
+
+1. Для начала подправьте файл настроек
+
+Он расположен в файле /etc/lilo.conf
+
+image=/boot/vmlinuz-2.6.7-my
+
+    label="Linux-2.6.7-my"
+    root=/dev/hda5
+    initrd=/boot/initrd-empty.splash
+    append="noapic devfs=mount splash=silent"
+    vga=0x317
+    read-only
+
+Если Вы не используете initrd (все драйверы необходимые для загрузки системы включены в ядро и bootsplash не используется), тогда соответствующую строчку можно удалить
+
+2. Дайте команду lilo под польззователем root для записи изменений в загрузчик
+
+Для дополнительной информации смотрите man lilo.conf
+
+4.2 Настройка GRUB
+
+1. Подправьте файл настроек
+
+/boot/grub/grub.conf
+
+title linux-2.6.7-my
+kernel /vmlinuz-2.6.7-my root=/dev/hda5 ro vga=791 splash=silent
+initrd /initrd-empty.splash
+boot
+
+Если Вы не используете initrd (все драйверы необходимые для загрузки системы включены в ядро и bootsplash не используется), тогда соответствующую строчку можно удалить
+
+2. После установки ядра grub в MBR будет затерт ASPLoader'ом. Вам надо будет заново установить grub. Под пользователем root введите в консоли
+
+grub
+grub> root (hd0,0) (/boot раздел расположен на первом разделе первого жесткого диска)
+Filesystem type is ext2fs, partition type 0x83
+
+grub> setup (hd0) (записать загрузчик в MBR первого жесткого диска)
+Checking if "/boot/grub/stage1" exists... no
+Checking if "/grub/stage1" exists... yes
+Checking if "/grub/stage2" exists... yes
+Checking if "/grub/e2fs_stage1_5" exists... yes
+Running "embed /grub/e2fs_stage1_5 (hd0)"... 16 sectors are embedded... succeeded
+Running "install /grub/stage1 (hd0) (hd0)1+16 p (hd0,0)/grub/stage2 /grub/grub.conf"... succeeded
+Done.
+
+grub> quit
+
+Подробнее о настройках grub смотрите info grub
+
+4.3 Настройка ASPLoader
+
+1. Сначала правим файл настроек
+
+Он расположен в файле /etc/aspldr.conf
+
+[linux1062672691@Linux(2.6.7-my)]
+icon linux
+kernel /boot/vmlinuz-2.6.7-my root=/dev/hda5 ro vga=791 splash=silent
+initrd /boot/initrd-2.6.7-my.img
+
+[SEPARATOR]
+
+[asplinux1@ASPLinux(2.4.20-9asp)]
+icon linux
+kernel /boot/vmlinuz-2.4.20-9asp root=/dev/hda5 ro
+initrd /boot/initrd.2.4.20-9asp.img
+
+Если Вы не используете initrd (все драйверы необходимые для загрузки системы включены в ядро и bootsplash не используется), тогда соответствующую строчку можно удалить
+
+2. Дайте команду aspldr для записи изменений в загрузчик
+
+Для дополнительной информации смотрите man aspldr.conf
+
+4.4 Отключение автоматической настройки загрузчика при установке ядра.
+
+Часто бывает неудобным, когда при установке ваш загрузчик автоматически меняется. Например, Вы выбрали grub, а Вам ставиться загрузчик, который система считает стандартным. Чтобы каждый раз не переустанавливать загрузчик, возможно вмешаться в этот процесс. Проверьте, существует ли у Вас файл /etc/sysconfig/installkernel Если да, то это не составит труда. Если нет, то для Вас единственный способ - это правка скрипта /sbin/installkernel
+Вот пример моего файла для MandrakeLinux 10.
+
+# Пример файла настроек/etc/sysconfig/installkernel для /sbin/installkernel
+
+# Если поставить "yes", тогда команда lilo запускаться не будет
+NOLAUNCH="YES"
+
+# Если поставить "yes", тогда файлы не будут копироваться
+NOCOPY=""
+
+# Если поставить "yes", тогда не будет создаваться ссылка vmlinuz на новое ядро
+NOLINK="yes"
+
+# Для автоопределения используемого загрузчика
+AUTODETECT="no"
+
+# Загрузчик (только GRUB или LILO поддерживаются)
+LOADER="GRUB"
+
+# Если не хотите чтобы Ваш файл настроек .config копировался в /boot
+NOCONFIG="yes"
+
+# Если не хотите чтобы добавлялась строчка в файл настроек загрузчика
+NOENTRY="yes"
+
+# Параметры командной строки для ядра,которые надо добавить
+OPTIONS=""
+
+# Удалять записи в случае удаления ядра (те что в виде rpm)
+AUTOREMOVE="yes"
+
+# Модули которые долны добавляться в initrd. Порядок важен.
+# Например INITRDOPTS="--with=reiserfs"
+INITRDOPTS=""
+
+5.Установка bootsplash в initrd.
+
+Bootsplash размещает свою картинку в файле initrd. Этот файл нельзя взять со стандартного ядра т.к. там еще расположены драйверы, которые на нашей версии ядра работать не будут. Поэтому нам нужно сделать новый. Лучший вариант, когда все драйверы необходимые для загрузки операционной системы вкомпилированы в ядро, в этом случае нам initrd нужен только для bootsplash. Файл /boot/initrd-2.6.7-my.img, который был создан автоматически командой make install, можно смело удалять. Вместо него есть смысл создать пустой файл и прописать туда bootsplash. Полученный файл подойдет для любых ядер, в которых все драйверы, необходимые для старта системы, включены в ядро! Ниже рассмотрим как это сделать для дистрибутивов ASPLinux 9 и MandrakeLinux 10.
+
+5.1 ASPLinux 9
+
+В самом дистрибутиве Вы не найдете bootsplash, он не входит в дистрибутив скорее по непонятным идеалогическим соображениям. Однако Вы можете скачать этот пакет с сайта Алхимии. Некоторые пользователи считают эту реализацию bootsplash лучшей среди дистрибутивов. Установка и настройка осуществляется мастером bootsplashconf. Вам нужно запустить этот мастер и ответить на несколько простых вопросов. Предупреждение: мастер может отображаться несколько некрасиво если установлена локаль по умолчанию UTF. Это связано с ошибками в реализации ncurses в этом дистрибутиве.
+
+5.2 MandrakeLinux 10
+
+В этом дистрибутиве есть свой мастер для настройки bootsplash, который можно запустить через стандартный drakconf. Однако есть смысл рассказать об альтернативном варианте - через консоль, т.к это просто и может пригодится.
+Если Вы хотите использовать новую тему, то сначала установите ее в файле /etc/sysconfig/bootsplash (например THEME=Linux). Затем дайте команду
+/usr/share/bootsplash/scripts/make-boot-splash /boot/initrd-bootsplash.img 1024x768
+Будет создан файл /boot/initrd-bootsplash.img который подойдет для всех наших ядер.
+
+6. Доводка Вашего дистрибутива.
+
+Если Вы используете дистрибутив, который основан на ядре 2.6, у Вас не должно быть проблем, однако если Ваш дистрибутив основан на 2.4, то Вы можете столкнуться с проблемами, связанными с тем что работа с модулями поменялась в ветке 2.6. Давайте разберемся.
+
+Работа с модулями
+
+Первое, нужны новые утилиты для работы с модулями - modutils. Они нужны для загрузки модулей. Вы их можете найти с помощью ресурса http://www.rpmfind.net. Качайте последнюю версию для своего дистрибутива или родственного дистрибутива (RedHat, Mandrake).
+
+Для установки пакетов нужно под пользователем root ввести команду
+
+rpm -Uhv <имя файла rpm>
+
+Второе, загрузочные скрипты ошибочно отключают автозагрузку модулей.
+
+Для этого в файле /etc/rc.d/rc.sysinit найдите следующие строки
+
+if ! LC_ALL=C grep -iq nomodules /proc/cmdline 2>/dev/null && [ -f /proc/ksyms ]; then
+USEMODULES=y
+fi
+
+и переделайте их к виду
+
+if ! LC_ALL=C grep -iq nomodules /proc/cmdline 2>/dev/null ; then
+USEMODULES=y
+fi
+
+Кроме этого, возможны проблемы с подключением модулей, которые имеют разные названия в версиях ядра 2.4 и 2.6. В этой ситуации помогает включение этих модулей в ядро.
+
+Если у Вас возникнут проблемы, Вы можете восстановить оригинальные пакеты, загрузившись с LiveCD, который понимает команду rpm (например Knoppix)
+
+Подключение файловой системы /sys
+
+Sysfs - новая фаловая система, похожая по назначению на /proc и нужна чтобы программы могли через нее работать с оборудованием и модулями. Пока что программ использующих ее не так уж много, однако лучше все-таки ее подключить. Проверить включена ли она у Вас сейчас можно командой mount без параметров.
+
+Для включения этой файловой системы сначала создайте каталог /sys.
+
+Если Вы не будете использовать ядра 2.4, то можно просто в файл /etc/fstab добавить такую строку.
+none /sys sysfs defaults 0 0
+Не забудьте, что в последняя строка этого файл должна быть пустой!
+
+Если Вам нужно грузить иногда и ядро 2.4, то лучше поступить по-другому. Указанный ранее вариант плох в этом случае тем, что загрузочные скрипты не смогут подключить эту ФС в ветке 2.4 и выдадут сообщение об ошибке. Добавьте в конец файла /etc/rc.d/rc.local следующую строку
+
+mount -t sysfs sysfs /sys >/dev/null 2>/dev/null
+
+На этом все. Добро пожаловать в Линукс 2.6!
+
+Приложения
+
+Установка драйверов Nvidia
+
+В этом разделе Вы сможете узнать подробнее об установке драйверов для видеокарт Nvidia (Для карт семейства TNT GeForce). Для этого нам нужно закачать драйвер видеокарты с официального сайта NVidia http://www.nvidia.com Получаем файл вида NVIDIA-Linux-x86-1.0-6106-pkg1.run
+
+Драйвер придется ставить без графики, в консоли. Для этого придеться загрузиться в однопользовательском режиме. Для загрузки в консоли передайте ядру параметр S (В ASPLoader для этого полазайте по меню и найдите соответствующую команду. В GRUB для редактирования используйте кнопку E, для загрузки c отредактированной строки B. Для LILO нажмите Esc, наберите метку Вашего ядра (одну из предложенных) и добавьте через пробел слово single или S )
+
+Во время загрузки с Вас затребуют пароль пользователя root. Вводите. Попадете в консоль. В консоли запустите команду mc - это облегчит работу
+
+Переходите в каталог, где лежит драйвер и запускайте его командой bash NVIDIA-Linux-x86-1.0-6106-pkg1.run или можно просто нажать на нем Enter, если Вы установите на нем права доступа 755
+
+Запустится установщик, согласитесь с лицензией. Установщик найдет уже установленный драйвер и предложит его удалить. Согласитесь. Потом установщик предложит поискать готовый драйвер в интернете. Откажитесь, все равно не найдет. Предложит сделать. Соглашайтесь. Драйвер должен установиться.
+
+Проверить это можно так. Загрузите модуль командой modprobe nvidia. Проверьте факт загрузки командой lsmod. Если в выводе lsmod Вы увидите строчку nvidia, - то все нормально. Обычно установщик сам ставит модуль в автозагрузку. Он добавляет в файл /etc/modules.conf строчку
+alias char-major-195 nvidia
+
+Если у Вас это по разным причинам не срабатывает, Вы можете добавить в файл /etc/rc.d/rc.local.local строчку
+modprobe nvidia
+
+Выходите из mc. Нажмите Ctrl-D для продолжения загрузки.
+
+Если все пошло не так.
+
+Если у Вас удалились старые и не установились новые драйверы, то можно загрузить графику так - в файле /etc/X11/XF86Config ищите (с помощью mc) строчку
+
+Driver "nvidia"
+и заменяете ее на
+
+Driver "nv"
+
+Этим Вы сможете загрузить графику, но не сможете с таким драйвером играть в игры. Чтобы вернуть все как было до наших экспериментов, найдите на установочных дисках пакеты (номер версии может быть другой)
+
+NVIDIA_GLX-1.0-4363asp.i386.rpm
+и один из
+NVIDIA_kernel-2.4.20-9asp.i686.rpm
+NVIDIA_kernel-2.4.20-9asp.athlon.rpm
+
+в зависимости от того ядра, которое у Вас установлено. Пакеты ставьте командой
+
+rpm -Uhv -force <имя пакета>
+
+или в файловом менеджере Gentoo ( http://linux.alhimia.ru/projects/misc/gentoo/ ) выделите пакеты, нажмите правой кнопкой- Действия-Обновление
+
+Не забудьте исправить файл /etc/X11/XF86Config
+
+Ищите решение проблем на форумах http://linux.alhimia.ru/forum
+
+Установка драйверов для нескольких ядер.
+
+Здесь рассмотрим ситуацию когда нам нужно установить драйверы для разных ядер. Обычно при запуске установщика драйверы удаляются и ставятся только для текущего ядра. Вместе с этим происходит обновление библиотек OpenGL. Эти библиотеки жестко связаны с версией драйверов, поэтому Ваши драйверы для старого ядра не смогут работать, если их номер версии отличен. Нам нужно будет установить драйверы для всех ядер, которые мы используем. Для этого нам понадобятся исходники ядра для всех этих ядер(!). Ссылка/lib/modules/версия_ядра/build должна соответствовать каталогу с исходниками. В этом каталоге должны быть выполнены команда make bzImage modules
+
+Перед тем как это сделать, положите NVIDIA-Linux-x86-1.0-6106-pkg1.run в каталог /usr/src и распакуйте его
+
+[mike@localhost src]$ sh NVIDIA-Linux-x86-1.0-6106-pkg1.run -x
+Creating directory NVIDIA-Linux-x86-1.0-6106-pkg1
+Verifying archive integrity... OK
+Uncompressing NVIDIA Accelerated Graphics Driver for Linux-x86
+1.0-6106..........................................................................................................................................................................................................
+[mike@localhost src]$
+
+Получится каталог NVIDIA-Linux-x86-1.0-6106-pkg1, в котором будут лежать исходники модуля и библиотеки GLX. Теперь нам остается только грузить наши остальные ядра в однопользовательском режиме и запускать команду для сборки и установки драйвера.
+
+[root@localhost root]# cd /usr/src/NVIDIA-Linux-x86-1.0-6106-pkg1/usr/src/nv
+[root@localhost nv]# make clean
+[root@localhost nv]# make install
+
+Проблемы с iptables
+
+После сборки своего ядра Вы можете столкнуться с тем, что некоторые модули iptables, которые успешно загружаются на стандартном ядре, не работают на самосборном. Не стоит сразу винить себя в ошибках. Дело в том, что и ядро и iptables в дистрибутивах, как правило, отличается от той версии, что предлагается для скачивания на странице разработчиков. Все разработчики дистрибутивов стремятся сделать свой дистрибутив богаче возможностями, поэтому на iptables и ядро накладываются заплатки, с одной стороны расширяющие возможности, а с другой стороны, ломающие совместимость со стандартными пакетами.
+
+Ниже будет рассмотрен пример выхода из этой ситуации в двух дистрибутивах: MandrakeLinux 10 и ASPLinux 9
+
+Iptables в MandrakeLinux 10.
+
+Начнем именно с этого дистрибутива, т.к. применяемый здесь метод может служить примером для других дистрибутивов.
+
+Дело в том, что дистрибутив уже готов к тому что Вы будете работать со своим ядром! В каталога /lib Вы можете обнаружить два подкаталога iptables-mandrake и iptables-vanilla. Это модули iptables для дистрибутивного и стандартного ядер соответственно. Кроме этого, Вы увидите ссылку iptables которая указывает на один из этих вариантов. Какой именно вариант нужен именно при этой загрузке, - определяется автоматически при старте iptables. Вот кусочек скрипта /etc/rc.d/init.d/iptables
+
+check() {
+
+    if [ -n "$1" ]; then
+
+        rm -f /lib/iptables
+        ln -s /lib/iptables-${1} /lib/iptables
+        iftable nat -N __IPTCHECK__${1}__ >/dev/null 2>&1
+        iftable nat -A __IPTCHECK__${1}__ -j MASQUERADE >/dev/null 2>&1
+        res=$?
+        iftable nat -F __IPTCHECK__${1}__ >/dev/null 2>&1
+        iftable nat -X __IPTCHECK__${1}__ >/dev/null 2>&1
+        return $res
+
+    else
+
+        /sbin/modprobe ipt_MASQUERADE >/dev/null 2>&1
+        check mandrake || check vanilla
+        /sbin/modprobe -r ipt_MASQUERADE >/dev/null 2>&1
+
+    fi
+
+}
+
+Обратите внимание, чтобы проверка успешно срабатывала необходимо в Вашем ядре сделать поддержку маскарада. Если Вам это не нужно, Вы можете изменить этот скрипт в соответствии с Вашими требованиями. Только не забудьте перед этим сделать архивную копию скрипта.
+
+Iptables в ASPLinux 9.
+
+Пользователям ASPLinux придется либо пересобирать iptables под свое ядро либо искать готовый. Для пересборки Вам нужно будет скачать с сервера Вашего дистрибьютора пакет iptables-xxx-asp.src.rpm. Установить его командой
+rpm -ihv <имя пакета>
+и пересобрать командой
+rpmbuild -bb /usr/src/aslinux/SPECS/iptables.spec
+Возможно этот spec файл Вам придется откорректировать, закоментировав строки
+
+patch -p1 ...
+Ищите собраный пакет в каталоге /usr/src/asplinux/SPECS/RPMS/i386 .
+Если для Вас это кажется сложным, то можете скачать готовый пакет для Fedora Core или отсюда http://linux.alhimia.ru/pub/linux/kernel/kernel-2.6/2.6.4-deps/iptables/iptables-1.2.9-1.2.i386.rpm
+
+Если Вам необходимо грузить и стандартное и свое ядра на одной машине, Вам придется реализовать механизм, используемый в MandrakeLinux. Стандартный каталог /lib/iptables переименуйте в /lib/iptables-asp. После установки "обычного" iptables, переименуйте каталог /lib/iptables в /lib/iptables-generic Файл /etc/rc.d/init.d/iptables изменить примерно так
+
+start() {
+rm -f /lib/iptables
+uname -r | grep -qi asp && ln -sf /lib/iptables-asp /lib/iptables
+[-d /lib/iptables ]|| ln -sf /lib/iptables-generic /lib/iptables
+# don't do squat if we don't have the config file
+
+Успехов!
+
+Благодарности
+
+Благодарю всех, кто оказал мне поддержку, помог в исправлении ошибок:
+
+Михаила (webm_uu @ km . ru)
+isn (Форум сообщества ASPLinux)
+rmn (Форум сообщества ASPLinux)
+Лешего
+Klimchyk Uladzimir.
+
+11.07.2004 г. Автор - Зарипов Михаил m3 @ mail . ru. Если Вы нашли орфографические / идеологические или другие ошибки - напишите автору.
+
+Copyright (C) 2004 linux.alhimia.ru
+
+При полном или частичном опубликовании ссылка на автора и ресурс обязательны
